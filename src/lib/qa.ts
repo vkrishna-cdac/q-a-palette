@@ -20,12 +20,12 @@ export interface QAItem {
 }
 
 export interface Review {
-  answer?: string;
-  cot?: string;
-  rating?: number;
-  liked?: "up" | "down" | null;
-  comment?: string;
-  edited?: boolean;
+  answer?: string | undefined;
+  cot?: string | undefined;
+  rating?: number | undefined;
+  liked?: "up" | "down" | null | undefined;
+  comment?: string | undefined;
+  edited?: boolean | undefined;
 }
 
 export type ReviewMap = Record<string, Review>;

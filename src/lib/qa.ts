@@ -26,6 +26,12 @@ export interface Review {
   liked?: "up" | "down" | null | undefined;
   comment?: string | undefined;
   edited?: boolean | undefined;
+  correct?: string | undefined;
+  grounded?: string | undefined;
+  complete?: string | undefined;
+  realistic?: string | undefined;
+  tone?: string | undefined;
+  ship?: string | undefined;
 }
 
 export type ReviewMap = Record<string, Review>;
@@ -129,6 +135,12 @@ function exportRows(items: QAItem[], reviews: ReviewMap): Row[] {
       "review.rating": r.rating ?? "",
       "review.feedback": r.liked ?? "",
       "review.notes": r.comment ?? "",
+      "review.correct": r.correct ?? "",
+      "review.grounded": r.grounded ?? "",
+      "review.complete": r.complete ?? "",
+      "review.realistic": r.realistic ?? "",
+      "review.tone": r.tone ?? "",
+      "review.ship": r.ship ?? "",
     };
   });
 }

@@ -46,7 +46,7 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-const SUBJECT_ORDER = ["Goods", "Works", "Services", "Other", "Others"];
+const SUBJECT_ORDER = ["Goods", "Works", "Services"];
 const REVIEW_KEY = "qa-reviews-v1";
 const DATA_KEY = "qa-dataset-v1";
 
@@ -84,6 +84,7 @@ function Home() {
   const tree = useMemo(() => {
     const map = new Map<string, Map<string, number>>();
     for (const it of items) {
+      if (!SUBJECT_ORDER.includes(it.subject)) continue;
       if (!map.has(it.subject)) map.set(it.subject, new Map());
       const s = map.get(it.subject)!;
       s.set(it.section, (s.get(it.section) ?? 0) + 1);
@@ -99,13 +100,19 @@ function Home() {
     const q = query.trim().toLowerCase();
     return items.filter(
       (i) =>
+        SUBJECT_ORDER.includes(i.subject) &&
         (!subject || i.subject === subject) &&
         (!section || i.section === section) &&
         (!q || i.question.toLowerCase().includes(q) || i.answer.toLowerCase().includes(q)),
     );
   }, [items, subject, section, query]);
 
-  const current = items.find((i) => i.id === selected) ?? null;
+  const current = visible.find((i) => i.id === selected) ?? null;
+  const currentIndex = current ? visible.findIndex((i) => i.id === current.id) : -1;
+  const go = (delta: number) => {
+    const next = visible[currentIndex + delta];
+    if (next) setSelected(next.id);
+  };
 
   const patch = (id: string, p: Review) =>
     setReviews((prev) => {
@@ -210,7 +217,10 @@ function Home() {
               !subject ? "bg-accent text-accent-foreground" : "hover:bg-secondary"
             }`}
           >
-            All questions <span className="text-muted-foreground">({items.length})</span>
+            All questions{" "}
+            <span className="text-muted-foreground">
+              ({tree.reduce((a, [, secs]) => a + Array.from(secs.values()).reduce((x, y) => x + y, 0), 0)})
+            </span>
           </button>
 
           <nav className="mt-2 space-y-1">
@@ -315,6 +325,13 @@ function Home() {
             item={current}
             review={current ? (reviews[current.id] ?? {}) : {}}
             onChange={(p) => current && patch(current.id, p)}
+            {...(currentIndex > 0 ? { onPrev: () => go(-1) } : {})}
+            {...(currentIndex >= 0 && currentIndex < visible.length - 1
+              ? { onNext: () => go(1) }
+              : {})}
+            {...(currentIndex >= 0
+              ? { position: `${currentIndex + 1} / ${visible.length}` }
+              : {})}
           />
         </section>
       </div>

@@ -59,7 +59,7 @@ export function cleanText(input: unknown): string {
   t = t.replace(/(?<=\S)\*+(?=\s|$)/g, "");
   t = t
     .split("\n")
-    .map((l) => l.replace(/\s+$/, "").replace(/^\s*[-•]\s+/, "• "))
+    .map((l) => l.replace(/\s+$/, "").replace(/^\s*#{1,6}\s+/, "").replace(/^\s*[-•]\s+/, "• "))
     .join("\n");
   return t.replace(/\n{3,}/g, "\n\n").trim();
 }

@@ -26,7 +26,7 @@ import {
   type Row,
 } from "@/lib/qa";
 import { ReviewPanel } from "@/components/qa/ReviewPanel";
-import seed from "@/data/seed.json";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -64,7 +64,7 @@ const SUBJECT_META: Record<
 };
 
 function Home() {
-  const [items, setItems] = useState<QAItem[]>(() => toItems(seed as Row[]));
+  const [items, setItems] = useState<QAItem[]>([]);
   const [reviews, setReviews] = useState<ReviewMap>({});
   const [subject, setSubject] = useState<string | null>(null);
   const [section, setSection] = useState<string | null>(null);

@@ -110,7 +110,10 @@ export async function parseFile(file: File): Promise<Row[]> {
   }
   const buf = await file.arrayBuffer();
   const wb = XLSX.read(buf, { type: "array" });
-  const sheet = wb.Sheets[wb.SheetNames[0]];
+  const first = wb.SheetNames[0];
+  if (!first) return [];
+  const sheet = wb.Sheets[first];
+  if (!sheet) return [];
   return XLSX.utils.sheet_to_json<Row>(sheet, { defval: "" });
 }
 

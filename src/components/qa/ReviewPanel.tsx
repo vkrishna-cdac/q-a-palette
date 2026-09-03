@@ -70,6 +70,7 @@ function Editable({
   const [editing, setEditing] = useState(false);
   const [open, setOpen] = useState(!collapsible);
   const [draft, setDraft] = useState(value);
+  const [justSaved, setJustSaved] = useState(false);
   useEffect(() => {
     setDraft(value);
     setEditing(false);
@@ -102,6 +103,8 @@ function Editable({
               onClick={() => {
                 onSave(draft);
                 setEditing(false);
+                setJustSaved(true);
+                setTimeout(() => setJustSaved(false), 2500);
               }}
               className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90"
             >
@@ -129,15 +132,22 @@ function Editable({
             )}
           </div>
         ) : (
-          <button
-            onClick={() => {
-              setOpen(true);
-              setEditing(true);
-            }}
-            className="inline-flex items-center gap-1.5 rounded-md border border-primary/30 bg-accent px-3 py-1.5 text-xs font-semibold text-accent-foreground hover:bg-accent/70"
-          >
-            <Pencil className="size-3.5" /> Edit {label}
-          </button>
+          <div className="flex items-center gap-2">
+            {justSaved && (
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                <Check className="size-3.5" /> Saved
+              </span>
+            )}
+            <button
+              onClick={() => {
+                setOpen(true);
+                setEditing(true);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-md border border-primary/30 bg-accent px-3 py-1.5 text-xs font-semibold text-accent-foreground hover:bg-accent/70"
+            >
+              <Pencil className="size-3.5" /> Edit {label}
+            </button>
+          </div>
         )}
       </header>
       {open &&

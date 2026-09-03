@@ -373,28 +373,6 @@ export function ReviewPanel({
                   {review.rating ? `${review.rating} / 5` : "not rated"}
                 </span>
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => onChange({ liked: review.liked === "up" ? null : "up" })}
-                  className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-semibold ${
-                    review.liked === "up"
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border hover:bg-secondary"
-                  }`}
-                >
-                  <ThumbsUp className="size-3.5" /> Liked
-                </button>
-                <button
-                  onClick={() => onChange({ liked: review.liked === "down" ? null : "down" })}
-                  className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-semibold ${
-                    review.liked === "down"
-                      ? "border-destructive bg-destructive text-destructive-foreground"
-                      : "border-border hover:bg-secondary"
-                  }`}
-                >
-                  <ThumbsDown className="size-3.5" /> Disliked
-                </button>
-              </div>
             </div>
           </div>
 

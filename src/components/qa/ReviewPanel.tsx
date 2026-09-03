@@ -307,7 +307,6 @@ export function ReviewPanel({
           />
           <Choice
             title="Realistic question?"
-            hint="Would a real user phrase it this way?"
             options={["Yes", "No", "Can't tell"]}
             value={review.realistic}
             onSelect={(v) => onChange({ realistic: v })}
@@ -321,8 +320,7 @@ export function ReviewPanel({
           />
           <Choice
             title="Would you ship this as-is?"
-            hint="The headline verdict."
-            options={["Ship", "Ship with small edit", "Reject"]}
+            options={["Pass", "Reject"]}
             value={review.ship}
             onSelect={(v) => onChange({ ship: v })}
           />

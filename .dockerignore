@@ -1,0 +1,14 @@
+node_modules
+npm-debug.log
+.output
+.nitro
+.tanstack
+.wrangler
+dist
+.git
+.gitignore
+.vscode
+.idea
+*.local
+.dev.vars
+README.md

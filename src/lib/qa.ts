@@ -55,6 +55,15 @@ export function normalizeLabel(value: unknown, fallback = "Extra"): string {
   return v;
 }
 
+/** Group loose section buckets like "(unlabelled)" and "uncertainty bounded" together. */
+export function normalizeSection(value: unknown): string {
+  const v = String(value ?? "").trim();
+  if (!v) return "Others";
+  if (/unlabell?ed|uncertaint/i.test(v)) return "Additional questions";
+  if (/^extras?$/i.test(v)) return "Extra";
+  return v;
+}
+
 /** Remove stray markdown asterisks/bullets without inventing or dropping content. */
 export function cleanText(input: unknown): string {
   let t = String(input ?? "");
@@ -86,7 +95,7 @@ export function toItems(rows: Row[]): QAItem[] {
       id: pick(r, "questionId", "id") || `q-${i}`,
       sourceDoc: normalizeLabel(pick(r, "source_doc", "document"), "Others"),
       subject: normalizeSubject(pick(r, "source_subject", "subject")),
-      section: normalizeLabel(pick(r, "section"), "Others"),
+      section: normalizeSection(pick(r, "section")),
       chunkName: pick(r, "chunkName", "chunk_name"),
       chunkPageRange: pick(r, "chunk_page_range"),
       citedManual: normalizeLabel(pick(r, "cited_manual"), ""),

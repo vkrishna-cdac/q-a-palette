@@ -191,6 +191,59 @@ function Choice({
   );
 }
 
+function CommentsBox({
+  value,
+  onSave,
+}: {
+  value: string;
+  onSave: (v: string) => void;
+}) {
+  const [draft, setDraft] = useState(value);
+  const [saved, setSaved] = useState(false);
+  useEffect(() => {
+    setDraft(value);
+    setSaved(false);
+  }, [value]);
+  const dirty = draft !== value;
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold">Comments</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">Anything else worth noting.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {saved && !dirty && (
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+              <Check className="size-3.5" /> Saved
+            </span>
+          )}
+          <button
+            onClick={() => {
+              onSave(draft);
+              setSaved(true);
+            }}
+            disabled={!dirty && !saved}
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-40"
+          >
+            <Check className="size-3.5" /> Save
+          </button>
+        </div>
+      </div>
+      <textarea
+        value={draft}
+        onChange={(e) => {
+          setDraft(e.target.value);
+          setSaved(false);
+        }}
+        placeholder="Comments…"
+        rows={3}
+        className="mt-2 w-full resize-y rounded-lg border border-input bg-background p-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+      />
+    </div>
+  );
+}
+
 export function ReviewPanel({
   item,
   review,
@@ -377,14 +430,9 @@ export function ReviewPanel({
           </div>
 
           <div className="border-t border-border pt-4">
-            <p className="text-sm font-semibold">Comments</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">Anything else worth noting.</p>
-            <textarea
+            <CommentsBox
               value={review.comment ?? ""}
-              onChange={(e) => onChange({ comment: e.target.value })}
-              placeholder="Comments…"
-              rows={3}
-              className="mt-2 w-full resize-y rounded-lg border border-input bg-background p-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+              onSave={(v) => onChange({ comment: v })}
             />
           </div>
         </section>

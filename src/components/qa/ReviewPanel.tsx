@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-// like/dislike moved below source chunk
 import {
   Star,
   ThumbsUp,

@@ -300,7 +300,9 @@ function Home() {
                         <div className="mt-6 flex items-end justify-between">
                           <span className="text-3xl font-bold">
                             {total}{" "}
-                            <span className="text-sm font-medium text-muted-foreground">pairs</span>
+                            <span className="text-sm font-medium text-muted-foreground">
+                              Q/A pairs
+                            </span>
                           </span>
                           <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
                             Open

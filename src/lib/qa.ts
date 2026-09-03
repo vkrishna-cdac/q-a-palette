@@ -39,19 +39,19 @@ export type ReviewMap = Record<string, Review>;
 /** Normalise a raw subject label into the three procurement families. */
 export function normalizeSubject(value: unknown): string {
   const v = String(value ?? "").trim();
-  if (!v || /^unlabell?ed$/i.test(v)) return "Others";
-  if (/^extras?$/i.test(v)) return "Other";
+  if (!v || /^unlabell?ed$/i.test(v)) return "Extra";
+  if (/^extras?$/i.test(v)) return "Extra";
   if (/good/i.test(v)) return "Goods";
   if (/work/i.test(v)) return "Works";
   if (/consult|service/i.test(v)) return "Services";
   return v;
 }
 
-export function normalizeLabel(value: unknown, fallback = "Others"): string {
+export function normalizeLabel(value: unknown, fallback = "Extra"): string {
   const v = String(value ?? "").trim();
   if (!v) return fallback;
-  if (/^unlabell?ed$/i.test(v)) return "Others";
-  if (/^extras?$/i.test(v)) return "Other";
+  if (/^unlabell?ed$/i.test(v)) return "Extra";
+  if (/^extras?$/i.test(v)) return "Extra";
   return v;
 }
 

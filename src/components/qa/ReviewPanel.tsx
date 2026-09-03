@@ -279,6 +279,36 @@ export function ReviewPanel({
           </Collapsible>
         )}
 
+        <section className="panel p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="font-display text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+              Quick verdict
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => onChange({ liked: review.liked === "up" ? null : "up" })}
+                className={`inline-flex items-center gap-1.5 rounded-md border px-4 py-2 text-xs font-semibold ${
+                  review.liked === "up"
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border hover:bg-secondary"
+                }`}
+              >
+                <ThumbsUp className="size-3.5" /> Liked
+              </button>
+              <button
+                onClick={() => onChange({ liked: review.liked === "down" ? null : "down" })}
+                className={`inline-flex items-center gap-1.5 rounded-md border px-4 py-2 text-xs font-semibold ${
+                  review.liked === "down"
+                    ? "border-destructive bg-destructive text-destructive-foreground"
+                    : "border-border hover:bg-secondary"
+                }`}
+              >
+                <ThumbsDown className="size-3.5" /> Disliked
+              </button>
+            </div>
+          </div>
+        </section>
+
         <section className="panel space-y-4 p-5">
           <h3 className="font-display text-sm font-semibold uppercase tracking-widest text-muted-foreground">
             Evaluation
@@ -304,12 +334,6 @@ export function ReviewPanel({
             options={["Fully answers", "Partial", "Answers more than asked"]}
             value={review.complete}
             onSelect={(v) => onChange({ complete: v })}
-          />
-          <Choice
-            title="Realistic question?"
-            options={["Yes", "No", "Can't tell"]}
-            value={review.realistic}
-            onSelect={(v) => onChange({ realistic: v })}
           />
           <Choice
             title="Tone & format right?"
@@ -348,28 +372,6 @@ export function ReviewPanel({
                 <span className="ml-2 text-xs text-muted-foreground">
                   {review.rating ? `${review.rating} / 5` : "not rated"}
                 </span>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => onChange({ liked: review.liked === "up" ? null : "up" })}
-                  className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-semibold ${
-                    review.liked === "up"
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border hover:bg-secondary"
-                  }`}
-                >
-                  <ThumbsUp className="size-3.5" /> Liked
-                </button>
-                <button
-                  onClick={() => onChange({ liked: review.liked === "down" ? null : "down" })}
-                  className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-semibold ${
-                    review.liked === "down"
-                      ? "border-destructive bg-destructive text-destructive-foreground"
-                      : "border-border hover:bg-secondary"
-                  }`}
-                >
-                  <ThumbsDown className="size-3.5" /> Disliked
-                </button>
               </div>
             </div>
           </div>

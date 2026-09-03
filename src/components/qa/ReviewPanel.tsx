@@ -163,7 +163,7 @@ function Choice({
   onSelect,
 }: {
   title: string;
-  hint: string;
+  hint?: string | undefined;
   options: string[];
   value?: string | undefined;
   onSelect: (v: string | undefined) => void;
@@ -171,7 +171,7 @@ function Choice({
   return (
     <div className="border-t border-border pt-4 first:border-0 first:pt-0">
       <p className="text-sm font-semibold">{title}</p>
-      <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>
+      {hint && <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>}
       <div className="mt-2 flex flex-wrap gap-2">
         {options.map((o) => (
           <button

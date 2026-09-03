@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ChevronRight,
-  ChevronLeft,
   FileSpreadsheet,
   Upload,
   Download,
@@ -12,7 +11,8 @@ import {
   Star,
   Package,
   HardHat,
-  HeadphonesIcon,
+  Headphones,
+  FolderOpen,
 } from "lucide-react";
 import {
   toItems,
@@ -26,7 +26,6 @@ import {
   type Row,
 } from "@/lib/qa";
 import { ReviewPanel } from "@/components/qa/ReviewPanel";
-
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -54,13 +53,10 @@ const SUBJECT_ORDER = ["Goods", "Works", "Services"];
 const REVIEW_KEY = "qa-reviews-v1";
 const DATA_KEY = "qa-dataset-v1";
 
-const SUBJECT_META: Record<
-  string,
-  { icon: React.ElementType; color: string; desc: string }
-> = {
-  Goods: { icon: Package, color: "bg-blue-600", desc: "Tangible products and supplies" },
-  Works: { icon: HardHat, color: "bg-sky-500", desc: "Construction and civil works" },
-  Services: { icon: HeadphonesIcon, color: "bg-indigo-500", desc: "Consultancy and service contracts" },
+const SUBJECT_META: Record<string, { icon: React.ElementType; color: string }> = {
+  Goods: { icon: Package, color: "bg-blue-600" },
+  Works: { icon: HardHat, color: "bg-sky-500" },
+  Services: { icon: Headphones, color: "bg-indigo-500" },
 };
 
 function Home() {
@@ -102,20 +98,25 @@ function Home() {
       const s = map.get(it.subject)!;
       s.set(it.section, (s.get(it.section) ?? 0) + 1);
     }
-    return Array.from(map.entries()).sort((a, b) => {
-      const ai = SUBJECT_ORDER.indexOf(a[0]);
-      const bi = SUBJECT_ORDER.indexOf(b[0]);
-      return (ai < 0 ? 99 : ai) - (bi < 0 ? 99 : bi);
-    });
+    return Array.from(map.entries()).sort(
+      (a, b) => SUBJECT_ORDER.indexOf(a[0]) - SUBJECT_ORDER.indexOf(b[0]),
+    );
   }, [items]);
+
+  const sections = useMemo(() => {
+    const found = tree.find(([s]) => s === subject);
+    if (!found) return [] as [string, number][];
+    return Array.from(found[1].entries()).sort((a, b) =>
+      a[0].localeCompare(b[0], undefined, { numeric: true }),
+    );
+  }, [tree, subject]);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     return items.filter(
       (i) =>
-        SUBJECT_ORDER.includes(i.subject) &&
-        (!subject || i.subject === subject) &&
-        (!section || i.section === section) &&
+        i.subject === subject &&
+        i.section === section &&
         (!q || i.question.toLowerCase().includes(q) || i.answer.toLowerCase().includes(q)),
     );
   }, [items, subject, section, query]);
@@ -140,6 +141,7 @@ function Home() {
     setSubject(null);
     setSection(null);
     setSelected(null);
+    setQuery("");
     try {
       localStorage.setItem(DATA_KEY, JSON.stringify(rows));
     } catch {
@@ -147,44 +149,49 @@ function Home() {
     }
   }
 
-  const enterSubject = (s: string) => {
-    setSubject(s);
-    setSection(null);
-    setSelected(null);
-    setQuery("");
-  };
-
-  const backHome = () => {
+  const goHome = () => {
     setSubject(null);
     setSection(null);
     setSelected(null);
     setQuery("");
   };
+  const goSubject = (s: string) => {
+    setSubject(s);
+    setSection(null);
+    setSelected(null);
+    setQuery("");
+  };
+  const goSection = (s: string) => {
+    setSection(s);
+    setSelected(null);
+    setQuery("");
+  };
+
+  const crumbs: { label: string; onClick?: () => void }[] = [
+    { label: "Source Document", ...(subject ? { onClick: goHome } : {}) },
+    ...(subject ? [{ label: subject, ...(section ? { onClick: () => goSubject(subject) } : {}) }] : []),
+    ...(section
+      ? [{ label: section, ...(current ? { onClick: () => goSection(section) } : {}) }]
+      : []),
+    ...(current ? [{ label: "Question" }] : []),
+  ];
 
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-20 border-b border-border bg-card/85 backdrop-blur">
-        <div className="flex flex-wrap items-center gap-4 px-6 py-4">
-          <div className="flex items-center gap-3">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-6 py-4">
+          <button onClick={goHome} className="flex items-center gap-3 text-left">
             <span className="flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <FileSpreadsheet className="size-5" />
             </span>
             <div>
               <h1 className="text-base font-semibold leading-tight">Q&amp;A Review Console</h1>
               <p className="text-xs text-muted-foreground">
-                {items.length} questions · {SUBJECT_ORDER.length} subjects
+                {items.length ? `${items.length} pairs loaded` : "No data imported yet"}
               </p>
             </div>
-          </div>
+          </button>
           <div className="ml-auto flex flex-wrap items-center gap-2">
-            {subject && (
-              <button
-                onClick={backHome}
-                className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs font-semibold hover:bg-secondary"
-              >
-                <ChevronLeft className="size-3.5" /> Back to subjects
-              </button>
-            )}
             <input
               ref={fileRef}
               type="file"
@@ -202,214 +209,207 @@ function Home() {
             >
               <Upload className="size-3.5" /> Import
             </button>
-            <button
-              onClick={() => exportXlsx(items, reviews)}
-              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:opacity-90"
-            >
-              <Download className="size-3.5" /> Export XLSX
-            </button>
-            <button
-              onClick={() => exportCsv(items, reviews)}
-              className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs font-semibold hover:bg-secondary"
-            >
-              <Download className="size-3.5" /> CSV
-            </button>
+            {items.length > 0 && (
+              <>
+                <button
+                  onClick={() => exportXlsx(items, reviews)}
+                  className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:opacity-90"
+                >
+                  <Download className="size-3.5" /> Export XLSX
+                </button>
+                <button
+                  onClick={() => exportCsv(items, reviews)}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs font-semibold hover:bg-secondary"
+                >
+                  <Download className="size-3.5" /> CSV
+                </button>
+              </>
+            )}
           </div>
         </div>
       </header>
 
-      {!subject ? (
-        <main className="mx-auto max-w-5xl p-8">
-          <div className="mb-10 text-center">
-            <p className="font-display text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Source Document
+      <main className="mx-auto max-w-6xl px-6 py-8">
+        {items.length === 0 ? (
+          <div className="mx-auto mt-16 max-w-md rounded-2xl border border-dashed border-border bg-card p-10 text-center shadow-sm">
+            <span className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-secondary text-primary">
+              <Upload className="size-7" />
+            </span>
+            <h2 className="text-lg font-semibold">Import your Q&amp;A dataset</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Upload an XLSX or CSV file to start reviewing. Nothing is shown until data is
+              imported.
             </p>
-            <div className="mx-auto mt-3 inline-flex items-center gap-3 rounded-xl border border-border bg-card px-5 py-3 shadow-sm">
-              <FileText className="size-5 text-primary" />
-              <div className="text-left">
-                <p className="text-sm font-semibold" title={docName}>
-                  {docs.length > 1 ? `${docs.length} manuals` : docName}
-                </p>
-                <p className="text-xs text-muted-foreground">Procurement manuals · grounded set</p>
-              </div>
-            </div>
+            <button
+              onClick={() => fileRef.current?.click()}
+              className="mt-6 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
+            >
+              <Upload className="size-4" /> Choose file
+            </button>
           </div>
-
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {tree.map(([subj, sections]) => {
-              const total = Array.from(sections.values()).reduce((a, b) => a + b, 0);
-              const meta = SUBJECT_META[subj] ?? {
-                icon: Package,
-                color: "bg-primary",
-                desc: "Procurement category",
-              };
-              const Icon = meta.icon;
-              return (
-                <button
-                  key={subj}
-                  onClick={() => enterSubject(subj)}
-                  className="group relative flex flex-col rounded-2xl border border-border bg-card p-6 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
-                >
-                  <span
-                    className={`mb-4 flex size-14 items-center justify-center rounded-2xl text-primary-foreground shadow ${meta.color}`}
-                  >
-                    <Icon className="size-7" />
-                  </span>
-                  <h2 className="text-2xl font-semibold tracking-tight">{subj}</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">{meta.desc}</p>
-                  <div className="mt-6 flex items-center justify-between">
-                    <span className="text-3xl font-bold text-foreground">{total}</span>
-                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
-                      Review <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </main>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 p-4 lg:grid-cols-[19rem_minmax(0,1fr)] xl:grid-cols-[19rem_24rem_minmax(0,1fr)]">
-          {/* Source document tree */}
-          <aside className="panel h-fit p-4 lg:sticky lg:top-24">
-            <p className="font-display text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Source Document
-            </p>
-            <div className="mt-2 flex items-start gap-2 rounded-lg bg-secondary p-3">
-              <FileText className="mt-0.5 size-4 shrink-0 text-primary" />
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold" title={docName}>
-                  {docs.length > 1 ? `${docs.length} manuals` : docName}
-                </p>
-                <p className="text-xs text-muted-foreground">Procurement manuals · grounded set</p>
-              </div>
-            </div>
-
-            <nav className="mt-4 space-y-1">
-              {tree.map(([subj, sections]) => {
-                const open = subject === subj;
-                const total = Array.from(sections.values()).reduce((a, b) => a + b, 0);
-                return (
-                  <div key={subj}>
+        ) : (
+          <>
+            {/* Breadcrumb */}
+            <nav className="mb-6 flex flex-wrap items-center gap-1.5 text-sm">
+              {crumbs.map((c, i) => (
+                <span key={i} className="flex items-center gap-1.5">
+                  {i > 0 && <ChevronRight className="size-3.5 text-muted-foreground" />}
+                  {c.onClick ? (
                     <button
-                      onClick={() => {
-                        if (open) backHome();
-                        else enterSubject(subj);
-                      }}
-                      className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold ${
-                        open ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                      }`}
+                      onClick={c.onClick}
+                      className="rounded px-1.5 py-0.5 font-medium text-primary hover:bg-secondary"
                     >
-                      <ChevronRight
-                        className={`size-4 transition-transform ${open ? "rotate-90" : ""}`}
-                      />
-                      <span className="flex-1 text-left">{subj}</span>
-                      <span className="text-xs opacity-70">{total}</span>
+                      {c.label}
                     </button>
-                    {open && (
-                      <div className="mt-1 ml-4 space-y-0.5 border-l border-border pl-2">
-                        {Array.from(sections.entries())
-                          .sort((a, b) => a[0].localeCompare(b[0], undefined, { numeric: true }))
-                          .map(([sec, count]) => (
-                            <button
-                              key={sec}
-                              onClick={() => setSection(section === sec ? null : sec)}
-                              className={`flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[0.82rem] ${
-                                section === sec
-                                  ? "bg-accent font-semibold text-accent-foreground"
-                                  : "hover:bg-secondary"
-                              }`}
-                            >
-                              <span className="flex-1">{sec}</span>
-                              <span className="text-xs text-muted-foreground">{count}</span>
-                            </button>
-                          ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                  ) : (
+                    <span className="px-1.5 py-0.5 font-semibold text-foreground">{c.label}</span>
+                  )}
+                </span>
+              ))}
             </nav>
-          </aside>
 
-          {/* Question list */}
-          <section className="panel h-fit overflow-hidden xl:sticky xl:top-24 xl:max-h-[calc(100vh-7.5rem)] xl:overflow-y-auto">
-            <div className="border-b border-border px-4 py-3">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-semibold">
-                  {subject}
-                  {section ? ` · ${section}` : ""}
-                </p>
-                <span className="text-xs text-muted-foreground">({visible.length})</span>
+            {/* Level 1 — subjects */}
+            {!subject && (
+              <>
+                <div className="mb-8 inline-flex items-center gap-3 rounded-xl border border-border bg-card px-5 py-3 shadow-sm">
+                  <FileText className="size-5 text-primary" />
+                  <div>
+                    <p className="text-sm font-semibold" title={docName}>
+                      {docs.length > 1 ? `${docs.length} manuals` : docName}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Grounded source set</p>
+                  </div>
+                </div>
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {tree.map(([subj, secs]) => {
+                    const total = Array.from(secs.values()).reduce((a, b) => a + b, 0);
+                    const meta = SUBJECT_META[subj] ?? { icon: Package, color: "bg-primary" };
+                    const Icon = meta.icon;
+                    return (
+                      <button
+                        key={subj}
+                        onClick={() => goSubject(subj)}
+                        className="group flex flex-col rounded-2xl border border-border bg-card p-6 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
+                      >
+                        <span
+                          className={`mb-4 flex size-14 items-center justify-center rounded-2xl text-primary-foreground shadow ${meta.color}`}
+                        >
+                          <Icon className="size-7" />
+                        </span>
+                        <h2 className="text-2xl font-semibold tracking-tight">{subj}</h2>
+                        <div className="mt-6 flex items-end justify-between">
+                          <span className="text-3xl font-bold">
+                            {total}{" "}
+                            <span className="text-sm font-medium text-muted-foreground">pairs</span>
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                            Open
+                            <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+
+            {/* Level 2 — sections */}
+            {subject && !section && (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {sections.map(([sec, count]) => (
+                  <button
+                    key={sec}
+                    onClick={() => goSection(sec)}
+                    className="group flex items-start gap-3 rounded-xl border border-border bg-card p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+                  >
+                    <FolderOpen className="mt-0.5 size-5 shrink-0 text-primary" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold leading-6">{sec}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{count} pairs</p>
+                    </div>
+                    <ChevronRight className="mt-0.5 size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                  </button>
+                ))}
+                {sections.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No sections in this subject.</p>
+                )}
               </div>
-              <div className="relative mt-2">
-                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search questions"
-                  className="w-full rounded-md border border-input bg-background py-2 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+            )}
+
+            {/* Level 3 — question list */}
+            {subject && section && !current && (
+              <div className="rounded-2xl border border-border bg-card shadow-sm">
+                <div className="border-b border-border p-4">
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder="Search questions in this section"
+                      className="w-full rounded-md border border-input bg-background py-2 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+                    />
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">{visible.length} pairs</p>
+                </div>
+                <ul className="divide-y divide-border">
+                  {visible.map((it) => {
+                    const r = reviews[it.id] ?? {};
+                    return (
+                      <li key={it.id}>
+                        <button
+                          onClick={() => setSelected(it.id)}
+                          className="flex w-full items-start gap-3 px-5 py-4 text-left transition-colors hover:bg-secondary/70"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[0.92rem] font-medium leading-6">{it.question}</p>
+                            <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[0.7rem] text-muted-foreground">
+                              <span>{citationLine(it)}</span>
+                              {r.edited && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-gold/25 px-1.5 py-0.5 font-semibold text-foreground">
+                                  <Pen className="size-2.5" /> Edited
+                                </span>
+                              )}
+                              {!!r.rating && (
+                                <span className="inline-flex items-center gap-1 text-foreground">
+                                  <Star className="size-3 fill-gold text-gold" />
+                                  {r.rating}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <ChevronRight className="mt-1 size-4 shrink-0 text-muted-foreground" />
+                        </button>
+                      </li>
+                    );
+                  })}
+                  {visible.length === 0 && (
+                    <li className="px-5 py-12 text-center text-sm text-muted-foreground">
+                      No questions match this search.
+                    </li>
+                  )}
+                </ul>
+              </div>
+            )}
+
+            {/* Level 4 — full page preview */}
+            {current && (
+              <div className="rounded-2xl border border-border bg-card shadow-sm">
+                <ReviewPanel
+                  item={current}
+                  review={reviews[current.id] ?? {}}
+                  onChange={(p) => patch(current.id, p)}
+                  {...(currentIndex > 0 ? { onPrev: () => go(-1) } : {})}
+                  {...(currentIndex >= 0 && currentIndex < visible.length - 1
+                    ? { onNext: () => go(1) }
+                    : {})}
+                  position={`${currentIndex + 1} / ${visible.length}`}
                 />
               </div>
-            </div>
-            <ul className="divide-y divide-border">
-              {visible.map((it) => {
-                const r = reviews[it.id] ?? {};
-                return (
-                  <li key={it.id}>
-                    <button
-                      onClick={() => setSelected(it.id)}
-                      className={`w-full px-4 py-3 text-left transition-colors ${
-                        selected === it.id ? "bg-accent/60" : "hover:bg-secondary/70"
-                      }`}
-                    >
-                      <p className="line-clamp-3 text-[0.86rem] font-medium leading-6">
-                        {it.question}
-                      </p>
-                      <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[0.68rem] text-muted-foreground">
-                        <span>{citationLine(it)}</span>
-                        {r.edited && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-gold/25 px-1.5 py-0.5 font-semibold text-foreground">
-                            <Pen className="size-2.5" /> Edited
-                          </span>
-                        )}
-                        {!!r.rating && (
-                          <span className="inline-flex items-center gap-1 text-foreground">
-                            <Star className="size-3 fill-gold text-gold" />
-                            {r.rating}
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                  </li>
-                );
-              })}
-              {visible.length === 0 && (
-                <li className="px-4 py-10 text-center text-sm text-muted-foreground">
-                  No questions match this filter.
-                </li>
-              )}
-            </ul>
-          </section>
-
-          {/* Review panel */}
-          <section className="panel min-h-[60vh] xl:max-h-[calc(100vh-7.5rem)] xl:overflow-hidden">
-            <ReviewPanel
-              item={current}
-              review={current ? (reviews[current.id] ?? {}) : {}}
-              onChange={(p) => current && patch(current.id, p)}
-              {...(currentIndex > 0 ? { onPrev: () => go(-1) } : {})}
-              {...(currentIndex >= 0 && currentIndex < visible.length - 1
-                ? { onNext: () => go(1) }
-                : {})}
-              {...(currentIndex >= 0
-                ? { position: `${currentIndex + 1} / ${visible.length}` }
-                : {})}
-            />
-          </section>
-        </div>
-      )}
+            )}
+          </>
+        )}
+      </main>
     </div>
   );
 }
-

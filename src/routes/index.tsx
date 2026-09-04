@@ -182,7 +182,7 @@ function Home() {
       const r = localStorage.getItem(REVIEW_KEY);
       if (r) setReviews(JSON.parse(r));
       const d = localStorage.getItem(DATA_KEY);
-      if (d) setItems(toItems(JSON.parse(d)));
+      if (d) setRows(JSON.parse(d));
     } catch {
       /* ignore */
     }

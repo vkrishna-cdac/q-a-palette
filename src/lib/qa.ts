@@ -16,6 +16,7 @@ export interface QAItem {
   answer: string;
   cot: string;
   chunkContent: string;
+  manual: boolean;
   raw: Row;
 }
 

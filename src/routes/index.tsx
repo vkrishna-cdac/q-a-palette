@@ -61,7 +61,7 @@ const SUBJECT_META: Record<string, { icon: React.ElementType; color: string }> =
   Services: { icon: Headphones, color: "bg-indigo-500" },
 };
 
-function AddQuestionForm({
+function AddQuestionPage({
   onSubmit,
   onClose,
 }: {
@@ -75,98 +75,101 @@ function AddQuestionForm({
   const valid = question.trim().length > 0 && answer.trim().length > 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-foreground/40 p-6 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-lg">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Add new question</h2>
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            className="rounded-md border border-border p-1.5 hover:bg-secondary"
-          >
-            <X className="size-4" />
-          </button>
+    <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-semibold">Add new question</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Saved to a separate “Added Questions” sheet in the exported workbook.
+          </p>
         </div>
-        <div className="space-y-4">
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Category
-            </label>
-            <select
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-            >
-              {SUBJECT_ORDER.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Question
-            </label>
-            <textarea
-              value={question}
-              maxLength={2000}
-              onChange={(e) => setQuestion(e.target.value)}
-              rows={3}
-              className="mt-1 w-full resize-y rounded-md border border-input bg-background p-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Answer
-            </label>
-            <textarea
-              value={answer}
-              maxLength={8000}
-              onChange={(e) => setAnswer(e.target.value)}
-              rows={5}
-              className="mt-1 w-full resize-y rounded-md border border-input bg-background p-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Remarks
-            </label>
-            <textarea
-              value={remarks}
-              maxLength={2000}
-              onChange={(e) => setRemarks(e.target.value)}
-              rows={2}
-              className="mt-1 w-full resize-y rounded-md border border-input bg-background p-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-        </div>
-        <div className="mt-6 flex justify-end gap-2">
-          <button
-            onClick={onClose}
-            className="rounded-md border border-border px-4 py-2 text-sm font-semibold hover:bg-secondary"
+        <button
+          onClick={onClose}
+          className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs font-semibold hover:bg-secondary"
+        >
+          <X className="size-3.5" /> Close
+        </button>
+      </div>
+      <div className="space-y-5">
+        <div>
+          <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Category
+          </label>
+          <select
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            className="mt-1 w-full max-w-xs rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
           >
-            Cancel
-          </button>
-          <button
-            disabled={!valid}
-            onClick={() =>
-              onSubmit({
-                subject,
-                question: question.trim(),
-                answer: answer.trim(),
-                remarks: remarks.trim(),
-              })
-            }
-            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-40"
-          >
-            Submit
-          </button>
+            {SUBJECT_ORDER.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
         </div>
+        <div>
+          <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Question
+          </label>
+          <textarea
+            value={question}
+            maxLength={2000}
+            onChange={(e) => setQuestion(e.target.value)}
+            rows={3}
+            className="mt-1 w-full resize-y rounded-md border border-input bg-background p-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
+        <div>
+          <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Answer
+          </label>
+          <textarea
+            value={answer}
+            maxLength={8000}
+            onChange={(e) => setAnswer(e.target.value)}
+            rows={8}
+            className="mt-1 w-full resize-y rounded-md border border-input bg-background p-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
+        <div>
+          <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Remarks
+          </label>
+          <textarea
+            value={remarks}
+            maxLength={2000}
+            onChange={(e) => setRemarks(e.target.value)}
+            rows={3}
+            className="mt-1 w-full resize-y rounded-md border border-input bg-background p-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
+      </div>
+      <div className="mt-6 flex justify-end gap-2">
+        <button
+          onClick={onClose}
+          className="rounded-md border border-border px-4 py-2 text-sm font-semibold hover:bg-secondary"
+        >
+          Cancel
+        </button>
+        <button
+          disabled={!valid}
+          onClick={() =>
+            onSubmit({
+              subject,
+              question: question.trim(),
+              answer: answer.trim(),
+              remarks: remarks.trim(),
+            })
+          }
+          className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-40"
+        >
+          Submit
+        </button>
       </div>
     </div>
   );
 }
+
 
 function Home() {
   const [rows, setRows] = useState<Row[]>([]);

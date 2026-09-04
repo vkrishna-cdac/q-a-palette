@@ -16,6 +16,7 @@ export interface QAItem {
   answer: string;
   cot: string;
   chunkContent: string;
+  manual: boolean;
   raw: Row;
 }
 
@@ -104,6 +105,7 @@ export function toItems(rows: Row[]): QAItem[] {
       answer: cleanText(pick(r, "answer")),
       cot: cleanText(pick(r, "cot", "chain_of_thought")),
       chunkContent: cleanText(pick(r, "chunk_content")),
+      manual: r["__manual"] === true || /^manual-/.test(pick(r, "questionId", "id")),
       raw: r,
     }));
 }
@@ -135,8 +137,9 @@ export async function parseFile(file: File): Promise<Row[]> {
 function exportRows(items: QAItem[], reviews: ReviewMap): Row[] {
   return items.map((it) => {
     const r = reviews[it.id] ?? {};
+    const { __manual: _drop, ...raw } = it.raw as Row & { __manual?: unknown };
     return {
-      ...it.raw,
+      ...raw,
       source_subject: it.subject,
       answer: r.answer ?? it.answer,
       cot: r.cot ?? it.cot,
@@ -155,14 +158,26 @@ function exportRows(items: QAItem[], reviews: ReviewMap): Row[] {
 }
 
 export function exportXlsx(items: QAItem[], reviews: ReviewMap, filename = "qa-review.xlsx") {
-  const ws = XLSX.utils.json_to_sheet(exportRows(items, reviews));
+  const imported = items.filter((i) => !i.manual);
+  const added = items.filter((i) => i.manual);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Review");
+  XLSX.utils.book_append_sheet(
+    wb,
+    XLSX.utils.json_to_sheet(exportRows(imported, reviews)),
+    "Review",
+  );
+  if (added.length)
+    XLSX.utils.book_append_sheet(
+      wb,
+      XLSX.utils.json_to_sheet(exportRows(added, reviews)),
+      "Added Questions",
+    );
   XLSX.writeFile(wb, filename);
 }
 
 export function exportCsv(items: QAItem[], reviews: ReviewMap, filename = "qa-review.csv") {
   const csv = Papa.unparse(exportRows(items, reviews) as object[]);
+
   const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
   const a = document.createElement("a");
   a.href = url;

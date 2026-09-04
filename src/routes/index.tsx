@@ -13,6 +13,8 @@ import {
   HardHat,
   Headphones,
   FolderOpen,
+  Plus,
+  X,
 } from "lucide-react";
 import {
   toItems,

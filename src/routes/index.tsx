@@ -282,18 +282,21 @@ function Home() {
       answer: v.answer,
       cot: "",
       remarks: v.remarks,
+      __manual: true,
     };
     persist([...rows, row]);
     setShowAdd(false);
   }
 
   const goHome = () => {
+    setShowAdd(false);
     setSubject(null);
     setSection(null);
     setSelected(null);
     setQuery("");
   };
   const goSubject = (s: string) => {
+    setShowAdd(false);
     setSubject(s);
     setSection(null);
     setSelected(null);
@@ -305,14 +308,19 @@ function Home() {
     setQuery("");
   };
 
-  const crumbs: { label: string; onClick?: () => void }[] = [
-    { label: "Source Document", ...(subject ? { onClick: goHome } : {}) },
-    ...(subject ? [{ label: subject, ...(section ? { onClick: () => goSubject(subject) } : {}) }] : []),
-    ...(section
-      ? [{ label: section, ...(current ? { onClick: () => goSection(section) } : {}) }]
-      : []),
-    ...(current ? [{ label: "Question" }] : []),
-  ];
+  const crumbs: { label: string; onClick?: () => void }[] = showAdd
+    ? [{ label: "Source Document", onClick: goHome }, { label: "Add question" }]
+    : [
+        { label: "Source Document", ...(subject ? { onClick: goHome } : {}) },
+        ...(subject
+          ? [{ label: subject, ...(section ? { onClick: () => goSubject(subject) } : {}) }]
+          : []),
+        ...(section
+          ? [{ label: section, ...(current ? { onClick: () => goSection(section) } : {}) }]
+          : []),
+        ...(current ? [{ label: "Question" }] : []),
+      ];
+
 
   return (
     <div className="min-h-screen bg-background">

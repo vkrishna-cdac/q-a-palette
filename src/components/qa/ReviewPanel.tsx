@@ -342,36 +342,6 @@ export function ReviewPanel({
           </Collapsible>
         )}
 
-        <section className="panel p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="font-display text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-              Quick verdict
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => onChange({ liked: review.liked === "up" ? null : "up" })}
-                className={`inline-flex items-center gap-1.5 rounded-md border px-4 py-2 text-xs font-semibold ${
-                  review.liked === "up"
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border hover:bg-secondary"
-                }`}
-              >
-                <ThumbsUp className="size-3.5" /> Liked
-              </button>
-              <button
-                onClick={() => onChange({ liked: review.liked === "down" ? null : "down" })}
-                className={`inline-flex items-center gap-1.5 rounded-md border px-4 py-2 text-xs font-semibold ${
-                  review.liked === "down"
-                    ? "border-destructive bg-destructive text-destructive-foreground"
-                    : "border-border hover:bg-secondary"
-                }`}
-              >
-                <ThumbsDown className="size-3.5" /> Disliked
-              </button>
-            </div>
-          </div>
-        </section>
-
         <section className="panel space-y-4 p-5">
           <h3 className="font-display text-sm font-semibold uppercase tracking-widest text-muted-foreground">
             Evaluation
@@ -411,6 +381,32 @@ export function ReviewPanel({
             value={review.ship}
             onSelect={(v) => onChange({ ship: v })}
           />
+
+          <div className="border-t border-border pt-4">
+            <p className="text-sm font-semibold">Quick verdict</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button
+                onClick={() => onChange({ liked: review.liked === "up" ? null : "up" })}
+                className={`inline-flex items-center gap-1.5 rounded-md border px-4 py-2 text-xs font-semibold ${
+                  review.liked === "up"
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border hover:bg-secondary"
+                }`}
+              >
+                <ThumbsUp className="size-3.5" /> Liked
+              </button>
+              <button
+                onClick={() => onChange({ liked: review.liked === "down" ? null : "down" })}
+                className={`inline-flex items-center gap-1.5 rounded-md border px-4 py-2 text-xs font-semibold ${
+                  review.liked === "down"
+                    ? "border-destructive bg-destructive text-destructive-foreground"
+                    : "border-border hover:bg-secondary"
+                }`}
+              >
+                <ThumbsDown className="size-3.5" /> Disliked
+              </button>
+            </div>
+          </div>
 
           <div className="border-t border-border pt-4">
             <p className="text-sm font-semibold">Overall rating</p>

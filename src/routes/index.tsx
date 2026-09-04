@@ -344,6 +344,12 @@ function Home() {
             >
               <Upload className="size-3.5" /> Import
             </button>
+            <button
+              onClick={() => setShowAdd(true)}
+              className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-accent px-3 py-2 text-xs font-semibold text-accent-foreground hover:bg-accent/70"
+            >
+              <Plus className="size-3.5" /> Add question
+            </button>
             {items.length > 0 && (
               <>
                 <button

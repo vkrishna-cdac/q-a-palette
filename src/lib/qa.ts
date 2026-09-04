@@ -60,7 +60,7 @@ export function normalizeSection(value: unknown): string {
   const v = String(value ?? "").trim();
   if (!v) return "Others";
   if (/unlabell?ed|uncertaint/i.test(v)) return "Additional questions";
-  if (/^extras?$/i.test(v)) return "Extra";
+  if (/^extras?$/i.test(v) || /^others?$/i.test(v)) return "Additional questions";
   return v;
 }
 

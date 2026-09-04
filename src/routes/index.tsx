@@ -553,6 +553,10 @@ function Home() {
           </>
         )}
       </main>
+
+      {showAdd && (
+        <AddQuestionForm onSubmit={addQuestion} onClose={() => setShowAdd(false)} />
+      )}
     </div>
   );
 }

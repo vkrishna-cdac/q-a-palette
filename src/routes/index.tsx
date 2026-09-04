@@ -244,18 +244,42 @@ function Home() {
       return { ...prev, [id]: next };
     });
 
+  function persist(next: Row[]) {
+    setRows(next);
+    try {
+      localStorage.setItem(DATA_KEY, JSON.stringify(next));
+    } catch {
+      /* dataset too large to cache */
+    }
+  }
+
   async function onImport(file: File) {
-    const rows = await parseFile(file);
-    setItems(toItems(rows));
+    const parsed = await parseFile(file);
+    persist(parsed);
     setSubject(null);
     setSection(null);
     setSelected(null);
     setQuery("");
-    try {
-      localStorage.setItem(DATA_KEY, JSON.stringify(rows));
-    } catch {
-      /* dataset too large to cache */
-    }
+  }
+
+  function addQuestion(v: {
+    subject: string;
+    question: string;
+    answer: string;
+    remarks: string;
+  }) {
+    const row: Row = {
+      questionId: `manual-${Date.now()}`,
+      source_doc: items[0]?.sourceDoc ?? "Manual entry",
+      source_subject: v.subject,
+      section: "Additional questions",
+      question_text: v.question,
+      answer: v.answer,
+      cot: "",
+      remarks: v.remarks,
+    };
+    persist([...rows, row]);
+    setShowAdd(false);
   }
 
   const goHome = () => {

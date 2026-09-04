@@ -12,6 +12,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { citationLine, type QAItem, type Review } from "@/lib/qa";
+import { toast } from "sonner";
 
 function Block({ text }: { text: string }) {
   if (!text) return <p className="text-sm italic text-muted-foreground">No content in source.</p>;
@@ -406,10 +407,12 @@ export function ReviewPanel({
               onClick={() => {
                 onChange({ ...draft, edited });
                 setSaved(true);
+                toast.success("Saved");
+                window.setTimeout(() => setSaved(false), 2500);
               }}
               className="inline-flex items-center gap-1.5 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-40"
             >
-              <Check className="size-4" /> Save
+              <Check className="size-4" /> {saved ? "Saved" : "Save"}
             </button>
           </div>
         </div>

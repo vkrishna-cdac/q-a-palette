@@ -200,12 +200,16 @@ function Home() {
     }
   }, [reviews]);
 
-  const docName = items[0]?.sourceDoc ?? "—";
-  const docs = useMemo(() => Array.from(new Set(items.map((i) => i.sourceDoc))), [items]);
+  const itemsWithoutManual = useMemo(() => toItems(rows.filter((r) => !r.__manual)), [rows]);
+  const docName = itemsWithoutManual[0]?.sourceDoc ?? "—";
+  const docs = useMemo(
+    () => Array.from(new Set(itemsWithoutManual.map((i) => i.sourceDoc))),
+    [itemsWithoutManual],
+  );
 
   const tree = useMemo(() => {
     const map = new Map<string, Map<string, number>>();
-    for (const it of items) {
+    for (const it of itemsWithoutManual) {
       if (!SUBJECT_ORDER.includes(it.subject)) continue;
       if (!map.has(it.subject)) map.set(it.subject, new Map());
       const s = map.get(it.subject)!;
@@ -214,7 +218,7 @@ function Home() {
     return Array.from(map.entries()).sort(
       (a, b) => SUBJECT_ORDER.indexOf(a[0]) - SUBJECT_ORDER.indexOf(b[0]),
     );
-  }, [items]);
+  }, [itemsWithoutManual]);
 
   const sections = useMemo(() => {
     const found = tree.find(([s]) => s === subject);
@@ -326,7 +330,9 @@ function Home() {
             <div>
               <h1 className="text-base font-semibold leading-tight">Q&amp;A Review Console</h1>
               <p className="text-xs text-muted-foreground">
-                {items.length ? `${items.length} pairs loaded` : "No data imported yet"}
+                {itemsWithoutManual.length
+                  ? `${itemsWithoutManual.length} pairs loaded`
+                  : "No data imported yet"}
               </p>
             </div>
           </button>
@@ -426,16 +432,6 @@ function Home() {
                       <p className="text-xs text-muted-foreground">Grounded source set</p>
                     </div>
                   </div>
-                  {items.length > 0 && (
-                    <div className="flex-shrink-0">
-                      <button
-                        onClick={() => setShowAdd(true)}
-                        className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-accent px-3 py-2 text-xs font-semibold text-accent-foreground hover:bg-accent/70"
-                      >
-                        <Plus className="size-3.5" /> Add question
-                      </button>
-                    </div>
-                  )}
                 </div>
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {tree.map(([subj, secs]) => {
@@ -470,6 +466,30 @@ function Home() {
                     );
                   })}
                 </div>
+                {itemsWithoutManual.length > 0 && (
+                  <div className="mt-6 flex justify-center">
+                    <button
+                      onClick={() => setShowAdd(true)}
+                      className="group flex w-full max-w-sm flex-col rounded-2xl border border-border bg-card p-6 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
+                    >
+                      <span
+                        className={`mb-4 flex size-14 items-center justify-center rounded-2xl text-primary-foreground shadow bg-blue-600`}
+                      >
+                        <Plus className="size-7" />
+                      </span>
+                      <h2 className="text-2xl font-semibold tracking-tight">Add question</h2>
+                      <div className="mt-6 flex items-end justify-between">
+                        <span className="text-sm font-medium text-muted-foreground">
+                          Create a new manual question
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                          Open
+                          <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                        </span>
+                      </div>
+                    </button>
+                  </div>
+                )}
               </>
             )}
 

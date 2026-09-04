@@ -370,7 +370,11 @@ function Home() {
       </header>
 
       <main className="mx-auto max-w-6xl px-6 py-8">
-        {items.length === 0 ? (
+        {showAdd ? (
+          <div className="mx-auto mb-6 max-w-3xl">
+            <AddQuestionPage onSubmit={addQuestion} onClose={() => setShowAdd(false)} />
+          </div>
+        ) : items.length === 0 ? (
           <div className="mx-auto mt-16 max-w-md rounded-2xl border border-dashed border-border bg-card p-10 text-center shadow-sm">
             <span className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-secondary text-primary">
               <Upload className="size-7" />
@@ -565,12 +569,6 @@ function Home() {
           </>
         )}
       </main>
-
-      {showAdd && (
-        <div className="mx-auto mb-6 max-w-3xl">
-          <AddQuestionPage onSubmit={addQuestion} onClose={() => setShowAdd(false)} />
-        </div>
-      )}
     </div>
   );
 }

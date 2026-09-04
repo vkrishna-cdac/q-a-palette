@@ -381,12 +381,20 @@ function Home() {
               Upload an XLSX or CSV file to start reviewing. Nothing is shown until data is
               imported.
             </p>
-            <button
-              onClick={() => fileRef.current?.click()}
-              className="mt-6 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
-            >
-              <Upload className="size-4" /> Choose file
-            </button>
+            <div className="mt-6 flex flex-wrap justify-center gap-2">
+              <button
+                onClick={() => fileRef.current?.click()}
+                className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
+              >
+                <Upload className="size-4" /> Choose file
+              </button>
+              <button
+                onClick={() => setShowAdd(true)}
+                className="inline-flex items-center gap-2 rounded-md border border-border px-4 py-2 text-sm font-semibold hover:bg-secondary"
+              >
+                <Plus className="size-4" /> Add question
+              </button>
+            </div>
           </div>
         ) : (
           <>

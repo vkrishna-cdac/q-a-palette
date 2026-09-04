@@ -400,31 +400,17 @@ export function ReviewPanel({
         </section>
 
         <div className="sticky bottom-0 -mx-6 border-t border-border bg-card/95 px-6 py-4 backdrop-blur">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs text-muted-foreground">
-              {canSave
-                ? saved && !dirty
-                  ? "All changes saved to the sheet."
-                  : "Ready to save. Nothing is written to the sheet until you save."
-                : `Fill every evaluation field to save: ${missing.join(", ")}`}
-            </p>
-            <div className="flex items-center gap-2">
-              {saved && !dirty && (
-                <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
-                  <Check className="size-3.5" /> Saved
-                </span>
-              )}
-              <button
-                disabled={!canSave || (!dirty && saved)}
-                onClick={() => {
-                  onChange({ ...draft, edited });
-                  setSaved(true);
-                }}
-                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-40"
-              >
-                <Check className="size-4" /> Save review
-              </button>
-            </div>
+          <div className="flex items-center justify-end">
+            <button
+              disabled={!canSave || (!dirty && saved)}
+              onClick={() => {
+                onChange({ ...draft, edited });
+                setSaved(true);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-40"
+            >
+              <Check className="size-4" /> Save
+            </button>
           </div>
         </div>
       </div>

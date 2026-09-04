@@ -170,7 +170,6 @@ function AddQuestionPage({
   );
 }
 
-
 function Home() {
   const [rows, setRows] = useState<Row[]>([]);
   const [showAdd, setShowAdd] = useState(false);
@@ -267,17 +266,12 @@ function Home() {
     setQuery("");
   }
 
-  function addQuestion(v: {
-    subject: string;
-    question: string;
-    answer: string;
-    remarks: string;
-  }) {
+  function addQuestion(v: { subject: string; question: string; answer: string; remarks: string }) {
     const row: Row = {
       questionId: `manual-${Date.now()}`,
       source_doc: items[0]?.sourceDoc ?? "Manual entry",
       source_subject: v.subject,
-      section: "Additional questions",
+      section: "Added Questions",
       question_text: v.question,
       answer: v.answer,
       cot: "",
@@ -321,7 +315,6 @@ function Home() {
         ...(current ? [{ label: "Question" }] : []),
       ];
 
-
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-20 border-b border-border bg-card/85 backdrop-blur">
@@ -355,12 +348,7 @@ function Home() {
             >
               <Upload className="size-3.5" /> Import
             </button>
-            <button
-              onClick={() => setShowAdd(true)}
-              className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-accent px-3 py-2 text-xs font-semibold text-accent-foreground hover:bg-accent/70"
-            >
-              <Plus className="size-3.5" /> Add question
-            </button>
+
             {items.length > 0 && (
               <>
                 <button
@@ -399,12 +387,6 @@ function Home() {
               >
                 <Upload className="size-4" /> Choose file
               </button>
-              <button
-                onClick={() => setShowAdd(true)}
-                className="inline-flex items-center gap-2 rounded-md border border-border px-4 py-2 text-sm font-semibold hover:bg-secondary"
-              >
-                <Plus className="size-4" /> Add question
-              </button>
             </div>
           </div>
         ) : (
@@ -428,17 +410,28 @@ function Home() {
               ))}
             </nav>
 
-            {/* Level 1 — subjects */}
             {!subject && (
               <>
-                <div className="mb-8 inline-flex items-center gap-3 rounded-xl border border-border bg-card px-5 py-3 shadow-sm">
-                  <FileText className="size-5 text-primary" />
-                  <div>
-                    <p className="text-sm font-semibold" title={docName}>
-                      {docs.length > 1 ? `${docs.length} manuals` : docName}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Grounded source set</p>
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div className="inline-flex items-center gap-3 rounded-xl border border-border bg-card px-5 py-3 shadow-sm">
+                    <FileText className="size-5 text-primary" />
+                    <div>
+                      <p className="text-sm font-semibold" title={docName}>
+                        {docs.length > 1 ? `${docs.length} manuals` : docName}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Grounded source set</p>
+                    </div>
                   </div>
+                  {items.length > 0 && (
+                    <div className="flex-shrink-0">
+                      <button
+                        onClick={() => setShowAdd(true)}
+                        className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-accent px-3 py-2 text-xs font-semibold text-accent-foreground hover:bg-accent/70"
+                      >
+                        <Plus className="size-3.5" /> Add question
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {tree.map(([subj, secs]) => {
@@ -574,7 +567,9 @@ function Home() {
       </main>
 
       {showAdd && (
-        <AddQuestionForm onSubmit={addQuestion} onClose={() => setShowAdd(false)} />
+        <div className="mx-auto mb-6 max-w-3xl">
+          <AddQuestionPage onSubmit={addQuestion} onClose={() => setShowAdd(false)} />
+        </div>
       )}
     </div>
   );

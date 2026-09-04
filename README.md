@@ -3,7 +3,7 @@
 Build a browser-based Q&A/evaluation UI with XLSX/CSV input and output.
 
 Home page must clearly show “Source Document”.
-i hvae a total of 1000  questions and anwer which i need to show
+i hvae a total of 1000 questions and anwer which i need to show
 
 in the home age only it should be divided into goods, works and services.
 inside each section it shoul be divided section wise too according to the sections.

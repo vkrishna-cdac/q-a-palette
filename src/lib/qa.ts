@@ -105,6 +105,7 @@ export function toItems(rows: Row[]): QAItem[] {
       answer: cleanText(pick(r, "answer")),
       cot: cleanText(pick(r, "cot", "chain_of_thought")),
       chunkContent: cleanText(pick(r, "chunk_content")),
+      manual: r["__manual"] === true || /^manual-/.test(pick(r, "questionId", "id")),
       raw: r,
     }));
 }

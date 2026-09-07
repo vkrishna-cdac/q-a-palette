@@ -219,6 +219,71 @@ export function ReviewPanel({
       </div>
     );
 
+  if (item.manual)
+    return (
+      <div className="flex h-full flex-col overflow-y-auto p-6 pb-24">
+        <div className="mb-4 flex flex-wrap items-center gap-2 text-[0.7rem] font-medium">
+          <span className="rounded-full bg-accent px-2.5 py-1 text-accent-foreground">
+            {item.subject}
+          </span>
+          <span className="rounded-full bg-secondary px-2.5 py-1 text-secondary-foreground">
+            {item.section}
+          </span>
+          <div className="ml-auto flex items-center gap-1.5">
+            {position && <span className="text-xs text-muted-foreground">{position}</span>}
+            <button
+              aria-label="Previous question"
+              onClick={onPrev}
+              disabled={!onPrev}
+              className="rounded-md border border-border p-1.5 hover:bg-secondary disabled:opacity-40"
+            >
+              <ChevronLeft className="size-4" />
+            </button>
+            <button
+              aria-label="Next question"
+              onClick={onNext}
+              disabled={!onNext}
+              className="rounded-md border border-border p-1.5 hover:bg-secondary disabled:opacity-40"
+            >
+              <ChevronRight className="size-4" />
+            </button>
+          </div>
+        </div>
+        <div className="mt-5 space-y-4">
+          <section className="panel p-5">
+            <h3 className="font-display text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+              Category
+            </h3>
+            <p className="mt-3 text-[0.92rem] font-medium leading-7">{item.subject || "—"}</p>
+          </section>
+          <section className="panel p-5">
+            <h3 className="font-display text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+              Question
+            </h3>
+            <p className="mt-3 whitespace-pre-line text-[0.92rem] leading-7 text-foreground/90">
+              {item.question || "—"}
+            </p>
+          </section>
+          <section className="panel p-5">
+            <h3 className="font-display text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+              Answer
+            </h3>
+            <p className="mt-3 whitespace-pre-line text-[0.9rem] leading-7 text-foreground/90">
+              {item.answer || "—"}
+            </p>
+          </section>
+          <section className="panel p-5">
+            <h3 className="font-display text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+              Remarks
+            </h3>
+            <p className="mt-3 whitespace-pre-line text-[0.9rem] leading-7 text-foreground/90">
+              {String(item.raw["remarks"] ?? "") || "—"}
+            </p>
+          </section>
+        </div>
+      </div>
+    );
+
   const set = (p: Review) => {
     setDraft((d) => ({ ...d, ...p }));
     setSaved(false);

@@ -12,6 +12,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { citationLine, type QAItem, type Review } from "@/lib/qa";
+import { toast } from "sonner";
 
 function Block({ text }: { text: string }) {
   if (!text) return <p className="text-sm italic text-muted-foreground">No content in source.</p>;
@@ -218,6 +219,71 @@ export function ReviewPanel({
       </div>
     );
 
+  if (item.manual)
+    return (
+      <div className="flex h-full flex-col overflow-y-auto p-6 pb-24">
+        <div className="mb-4 flex flex-wrap items-center gap-2 text-[0.7rem] font-medium">
+          <span className="rounded-full bg-accent px-2.5 py-1 text-accent-foreground">
+            {item.subject}
+          </span>
+          <span className="rounded-full bg-secondary px-2.5 py-1 text-secondary-foreground">
+            {item.section}
+          </span>
+          <div className="ml-auto flex items-center gap-1.5">
+            {position && <span className="text-xs text-muted-foreground">{position}</span>}
+            <button
+              aria-label="Previous question"
+              onClick={onPrev}
+              disabled={!onPrev}
+              className="rounded-md border border-border p-1.5 hover:bg-secondary disabled:opacity-40"
+            >
+              <ChevronLeft className="size-4" />
+            </button>
+            <button
+              aria-label="Next question"
+              onClick={onNext}
+              disabled={!onNext}
+              className="rounded-md border border-border p-1.5 hover:bg-secondary disabled:opacity-40"
+            >
+              <ChevronRight className="size-4" />
+            </button>
+          </div>
+        </div>
+        <div className="mt-5 space-y-4">
+          <section className="panel p-5">
+            <h3 className="font-display text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+              Category
+            </h3>
+            <p className="mt-3 text-[0.92rem] font-medium leading-7">{item.subject || "—"}</p>
+          </section>
+          <section className="panel p-5">
+            <h3 className="font-display text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+              Question
+            </h3>
+            <p className="mt-3 whitespace-pre-line text-[0.92rem] leading-7 text-foreground/90">
+              {item.question || "—"}
+            </p>
+          </section>
+          <section className="panel p-5">
+            <h3 className="font-display text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+              Answer
+            </h3>
+            <p className="mt-3 whitespace-pre-line text-[0.9rem] leading-7 text-foreground/90">
+              {item.answer || "—"}
+            </p>
+          </section>
+          <section className="panel p-5">
+            <h3 className="font-display text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+              Remarks
+            </h3>
+            <p className="mt-3 whitespace-pre-line text-[0.9rem] leading-7 text-foreground/90">
+              {String(item.raw["remarks"] ?? "") || "—"}
+            </p>
+          </section>
+        </div>
+      </div>
+    );
+
   const set = (p: Review) => {
     setDraft((d) => ({ ...d, ...p }));
     setSaved(false);
@@ -400,31 +466,19 @@ export function ReviewPanel({
         </section>
 
         <div className="sticky bottom-0 -mx-6 border-t border-border bg-card/95 px-6 py-4 backdrop-blur">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs text-muted-foreground">
-              {canSave
-                ? saved && !dirty
-                  ? "All changes saved to the sheet."
-                  : "Ready to save. Nothing is written to the sheet until you save."
-                : `Fill every evaluation field to save: ${missing.join(", ")}`}
-            </p>
-            <div className="flex items-center gap-2">
-              {saved && !dirty && (
-                <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
-                  <Check className="size-3.5" /> Saved
-                </span>
-              )}
-              <button
-                disabled={!canSave || (!dirty && saved)}
-                onClick={() => {
-                  onChange({ ...draft, edited });
-                  setSaved(true);
-                }}
-                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-40"
-              >
-                <Check className="size-4" /> Save review
-              </button>
-            </div>
+          <div className="flex items-center justify-end">
+            <button
+              disabled={!canSave || (!dirty && saved)}
+              onClick={() => {
+                onChange({ ...draft, edited });
+                setSaved(true);
+                toast.success("Saved");
+                window.setTimeout(() => setSaved(false), 2500);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-40"
+            >
+              <Check className="size-4" /> {saved ? "Saved" : "Save"}
+            </button>
           </div>
         </div>
       </div>

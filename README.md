@@ -3,7 +3,7 @@
 Build a browser-based Q&A/evaluation UI with XLSX/CSV input and output.
 
 Home page must clearly show “Source Document”.
-i hvae a total of 1000  questions and anwer which i need to show
+i hvae a total of 1000 questions and anwer which i need to show
 
 in the home age only it should be divided into goods, works and services.
 inside each section it shoul be divided section wise too according to the sections.
@@ -28,19 +28,7 @@ Hide clean score (e.g. 7.927) and average quality value.
 
 Support XLSX and CSV import/export, including XLSX export.
 
-make it clean, simple and highly asthetic with professional light theme.
-
-This project was built with [Lovable](https://lovable.dev).
-
-**Live app**: https://q-a-palette.lovable.app
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/3aead27e-7ae5-43cc-86e4-742f8cfd70a3).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+make it clean, simple and highly aesthetic with professional light theme.
 
 ## Development
 

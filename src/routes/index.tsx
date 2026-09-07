@@ -170,7 +170,6 @@ function AddQuestionPage({
   );
 }
 
-
 function Home() {
   const [rows, setRows] = useState<Row[]>([]);
   const [showAdd, setShowAdd] = useState(false);
@@ -267,12 +266,7 @@ function Home() {
     setQuery("");
   }
 
-  function addQuestion(v: {
-    subject: string;
-    question: string;
-    answer: string;
-    remarks: string;
-  }) {
+  function addQuestion(v: { subject: string; question: string; answer: string; remarks: string }) {
     const row: Row = {
       questionId: `manual-${Date.now()}`,
       source_doc: items[0]?.sourceDoc ?? "Manual entry",
@@ -320,7 +314,6 @@ function Home() {
           : []),
         ...(current ? [{ label: "Question" }] : []),
       ];
-
 
   return (
     <div className="min-h-screen bg-background">
@@ -573,9 +566,7 @@ function Home() {
         )}
       </main>
 
-      {showAdd && (
-        <AddQuestionForm onSubmit={addQuestion} onClose={() => setShowAdd(false)} />
-      )}
+      {showAdd && <AddQuestionForm onSubmit={addQuestion} onClose={() => setShowAdd(false)} />}
     </div>
   );
 }

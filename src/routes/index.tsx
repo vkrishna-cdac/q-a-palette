@@ -15,6 +15,7 @@ import {
   FolderOpen,
   Plus,
   X,
+  List,
 } from "lucide-react";
 import {
   toItems,
@@ -173,6 +174,7 @@ function AddQuestionPage({
 function Home() {
   const [rows, setRows] = useState<Row[]>([]);
   const [showAdd, setShowAdd] = useState(false);
+  const [showAdded, setShowAdded] = useState(false);
   const items = useMemo(() => toItems(rows), [rows]);
   const [reviews, setReviews] = useState<ReviewMap>({});
   const [subject, setSubject] = useState<string | null>(null);
@@ -200,7 +202,8 @@ function Home() {
     }
   }, [reviews]);
 
-  const itemsWithoutManual = useMemo(() => toItems(rows.filter((r) => !r.__manual)), [rows]);
+  const itemsWithoutManual = useMemo(() => toItems(rows.filter((r) => !r["__manual"])), [rows]);
+  const addedItems = useMemo(() => items.filter((i) => i.manual), [items]);
   const docName = itemsWithoutManual[0]?.sourceDoc ?? "—";
   const docs = useMemo(
     () => Array.from(new Set(itemsWithoutManual.map((i) => i.sourceDoc))),
@@ -238,10 +241,18 @@ function Home() {
     );
   }, [items, subject, section, query]);
 
-  const current = visible.find((i) => i.id === selected) ?? null;
-  const currentIndex = current ? visible.findIndex((i) => i.id === current.id) : -1;
+  const shown = useMemo(() => {
+    if (!showAdded) return visible;
+    const q = query.trim().toLowerCase();
+    return addedItems.filter(
+      (i) => !q || i.question.toLowerCase().includes(q) || i.answer.toLowerCase().includes(q),
+    );
+  }, [showAdded, visible, addedItems, query]);
+
+  const current = shown.find((i) => i.id === selected) ?? null;
+  const currentIndex = current ? shown.findIndex((i) => i.id === current.id) : -1;
   const go = (delta: number) => {
-    const next = visible[currentIndex + delta];
+    const next = shown[currentIndex + delta];
     if (next) setSelected(next.id);
   };
 
@@ -288,6 +299,15 @@ function Home() {
 
   const goHome = () => {
     setShowAdd(false);
+    setShowAdded(false);
+    setSubject(null);
+    setSection(null);
+    setSelected(null);
+    setQuery("");
+  };
+  const goAdded = () => {
+    setShowAdd(false);
+    setShowAdded(true);
     setSubject(null);
     setSection(null);
     setSelected(null);
@@ -295,6 +315,7 @@ function Home() {
   };
   const goSubject = (s: string) => {
     setShowAdd(false);
+    setShowAdded(false);
     setSubject(s);
     setSection(null);
     setSelected(null);
@@ -308,16 +329,22 @@ function Home() {
 
   const crumbs: { label: string; onClick?: () => void }[] = showAdd
     ? [{ label: "Source Document", onClick: goHome }, { label: "Add question" }]
-    : [
-        { label: "Source Document", ...(subject ? { onClick: goHome } : {}) },
-        ...(subject
-          ? [{ label: subject, ...(section ? { onClick: () => goSubject(subject) } : {}) }]
-          : []),
-        ...(section
-          ? [{ label: section, ...(current ? { onClick: () => goSection(section) } : {}) }]
-          : []),
-        ...(current ? [{ label: "Question" }] : []),
-      ];
+    : showAdded
+      ? [
+          { label: "Source Document", onClick: goHome },
+          ...(current ? [{ label: "Added Questions", onClick: goAdded }] : []),
+          ...(current ? [{ label: "Question" }] : [{ label: "Added Questions" }]),
+        ]
+      : [
+          { label: "Source Document", ...(subject ? { onClick: goHome } : {}) },
+          ...(subject
+            ? [{ label: subject, ...(section ? { onClick: () => goSubject(subject) } : {}) }]
+            : []),
+          ...(section
+            ? [{ label: section, ...(current ? { onClick: () => goSection(section) } : {}) }]
+            : []),
+          ...(current ? [{ label: "Question" }] : []),
+        ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -420,7 +447,7 @@ function Home() {
               ))}
             </nav>
 
-            {!subject && (
+            {!subject && !showAdded && (
               <>
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div className="inline-flex items-center gap-3 rounded-xl border border-border bg-card px-5 py-3 shadow-sm">
@@ -466,28 +493,51 @@ function Home() {
                     );
                   })}
                 </div>
-                {itemsWithoutManual.length > 0 && (
-                  <div className="mt-6 flex justify-center">
-                    <button
-                      onClick={() => setShowAdd(true)}
-                      className="group flex w-full max-w-sm flex-col rounded-2xl border border-border bg-card p-6 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
-                    >
-                      <span
-                        className={`mb-4 flex size-14 items-center justify-center rounded-2xl text-primary-foreground shadow bg-blue-600`}
+                {(itemsWithoutManual.length > 0 || addedItems.length > 0) && (
+                  <div className="mt-6 grid gap-6 sm:grid-cols-2">
+                    {addedItems.length > 0 && (
+                      <button
+                        onClick={goAdded}
+                        className="group flex w-full flex-col rounded-2xl border border-border bg-card p-6 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
                       >
-                        <Plus className="size-7" />
-                      </span>
-                      <h2 className="text-2xl font-semibold tracking-tight">Add question</h2>
-                      <div className="mt-6 flex items-end justify-between">
-                        <span className="text-sm font-medium text-muted-foreground">
-                          Create a new manual question
+                        <span className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow">
+                          <List className="size-7" />
                         </span>
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
-                          Open
-                          <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                        <h2 className="text-2xl font-semibold tracking-tight">Added questions</h2>
+                        <div className="mt-6 flex items-end justify-between">
+                          <span className="text-3xl font-bold">
+                            {addedItems.length}{" "}
+                            <span className="text-sm font-medium text-muted-foreground">
+                              Q/A pairs
+                            </span>
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                            Open
+                            <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                          </span>
+                        </div>
+                      </button>
+                    )}
+                    {itemsWithoutManual.length > 0 && (
+                      <button
+                        onClick={() => setShowAdd(true)}
+                        className="group flex w-full flex-col rounded-2xl border border-border bg-card p-6 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
+                      >
+                        <span className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-blue-600 text-primary-foreground shadow">
+                          <Plus className="size-7" />
                         </span>
-                      </div>
-                    </button>
+                        <h2 className="text-2xl font-semibold tracking-tight">Add question</h2>
+                        <div className="mt-6 flex items-end justify-between">
+                          <span className="text-sm font-medium text-muted-foreground">
+                            Create a new manual question
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                            Open
+                            <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                          </span>
+                        </div>
+                      </button>
+                    )}
                   </div>
                 )}
               </>
@@ -517,7 +567,7 @@ function Home() {
             )}
 
             {/* Level 3 — question list */}
-            {subject && section && !current && (
+            {(showAdded || (subject && section)) && !current && (
               <div className="rounded-2xl border border-border bg-card shadow-sm">
                 <div className="border-b border-border p-4">
                   <div className="relative">
@@ -525,14 +575,16 @@ function Home() {
                     <input
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
-                      placeholder="Search questions in this section"
+                      placeholder={
+                        showAdded ? "Search added questions" : "Search questions in this section"
+                      }
                       className="w-full rounded-md border border-input bg-background py-2 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring"
                     />
                   </div>
-                  <p className="mt-2 text-xs text-muted-foreground">{visible.length} pairs</p>
+                  <p className="mt-2 text-xs text-muted-foreground">{shown.length} pairs</p>
                 </div>
                 <ul className="divide-y divide-border">
-                  {visible.map((it) => {
+                  {shown.map((it) => {
                     const r = reviews[it.id] ?? {};
                     return (
                       <li key={it.id}>
@@ -562,7 +614,7 @@ function Home() {
                       </li>
                     );
                   })}
-                  {visible.length === 0 && (
+                  {shown.length === 0 && (
                     <li className="px-5 py-12 text-center text-sm text-muted-foreground">
                       No questions match this search.
                     </li>
@@ -579,10 +631,10 @@ function Home() {
                   review={reviews[current.id] ?? {}}
                   onChange={(p) => patch(current.id, p)}
                   {...(currentIndex > 0 ? { onPrev: () => go(-1) } : {})}
-                  {...(currentIndex >= 0 && currentIndex < visible.length - 1
+                  {...(currentIndex >= 0 && currentIndex < shown.length - 1
                     ? { onNext: () => go(1) }
                     : {})}
-                  position={`${currentIndex + 1} / ${visible.length}`}
+                  position={`${currentIndex + 1} / ${shown.length}`}
                 />
               </div>
             )}

@@ -11,8 +11,7 @@ RUN npm ci
 # Copy rest of the source
 COPY . .
 
-# Build for Node (Docker) instead of Cloudflare.
-# Outside Lovable's sandbox (isSandbox=false) Nitro respects NITRO_PRESET.
+# Build for Node (Docker).
 # "node-server" produces a plain Node.js server at .output/server/index.mjs
 ENV NITRO_PRESET=node-server
 RUN npm run build

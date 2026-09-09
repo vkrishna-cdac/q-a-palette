@@ -189,6 +189,132 @@ function Choice({
   );
 }
 
+function EvaluationFields({ draft, onSet }: { draft: Review; onSet: (p: Review) => void }) {
+  return (
+    <section className="panel space-y-4 p-5">
+      <h3 className="font-display text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+        Evaluation
+      </h3>
+
+      <Choice
+        title="Correct?"
+        hint="Is the answer factually right?"
+        options={["Yes", "No", "Can't tell"]}
+        value={draft.correct}
+        onSelect={(v) => onSet({ correct: v })}
+      />
+      <Choice
+        title="Is the reference from the source correct?"
+        hint="Everything in the answer is supported by the source."
+        options={["Yes", "No", "Can't tell"]}
+        value={draft.grounded}
+        onSelect={(v) => onSet({ grounded: v })}
+      />
+      <Choice
+        title="Complete?"
+        hint="Does it answer exactly what was asked?"
+        options={["Fully answers", "Partial", "Answers more than asked"]}
+        value={draft.complete}
+        onSelect={(v) => onSet({ complete: v })}
+      />
+      <Choice
+        title="Is the answer language as per NRL style?"
+        hint="Right style and length for a training example."
+        options={["Yes", "No", "Can't tell"]}
+        value={draft.tone}
+        onSelect={(v) => onSet({ tone: v })}
+      />
+
+      <div className="border-t border-border pt-4">
+        <p className="text-sm font-semibold">Quick verdict</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button
+            onClick={() => onSet({ liked: draft.liked === "up" ? null : "up" })}
+            className={`inline-flex items-center gap-1.5 rounded-md border px-4 py-2 text-xs font-semibold ${
+              draft.liked === "up"
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border hover:bg-secondary"
+            }`}
+          >
+            <ThumbsUp className="size-3.5" /> Liked
+          </button>
+          <button
+            onClick={() => onSet({ liked: draft.liked === "down" ? null : "down" })}
+            className={`inline-flex items-center gap-1.5 rounded-md border px-4 py-2 text-xs font-semibold ${
+              draft.liked === "down"
+                ? "border-destructive bg-destructive text-destructive-foreground"
+                : "border-border hover:bg-secondary"
+            }`}
+          >
+            <ThumbsDown className="size-3.5" /> Disliked
+          </button>
+        </div>
+      </div>
+
+      <div className="border-t border-border pt-4">
+        <p className="text-sm font-semibold">Overall rating</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">How good is this pair, 1–5?</p>
+        <div className="mt-2 flex items-center gap-1">
+          {[1, 2, 3, 4, 5].map((n) => (
+            <button
+              key={n}
+              aria-label={`${n} star`}
+              onClick={() => onSet({ rating: draft.rating === n ? 0 : n })}
+            >
+              <Star
+                className={`size-6 transition-transform hover:scale-110 ${
+                  (draft.rating ?? 0) >= n ? "fill-gold text-gold" : "text-muted-foreground/40"
+                }`}
+              />
+            </button>
+          ))}
+          <span className="ml-2 text-xs text-muted-foreground">
+            {draft.rating ? `${draft.rating} / 5` : "not rated"}
+          </span>
+        </div>
+      </div>
+
+      <div className="border-t border-border pt-4">
+        <p className="text-sm font-semibold">Comments(Optional)</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">Anything else worth noting.</p>
+        <textarea
+          value={draft.comment ?? ""}
+          onChange={(e) => onSet({ comment: e.target.value })}
+          placeholder="Comments…"
+          rows={3}
+          className="mt-2 w-full resize-y rounded-lg border border-input bg-background p-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+        />
+      </div>
+    </section>
+  );
+}
+
+function SaveBar({
+  onSave,
+  canSave,
+  dirty,
+  saved,
+}: {
+  onSave: () => void;
+  canSave: boolean;
+  dirty: boolean;
+  saved: boolean;
+}) {
+  return (
+    <div className="sticky bottom-0 -mx-6 border-t border-border bg-card/95 px-6 py-4 backdrop-blur">
+      <div className="flex items-center justify-end">
+        <button
+          disabled={!canSave || (!dirty && saved)}
+          onClick={onSave}
+          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-40"
+        >
+          <Check className="size-4" /> {saved ? "Saved" : "Save"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function ReviewPanel({
   item,
   review,
@@ -218,6 +344,32 @@ export function ReviewPanel({
         Select a question to review its answer, reasoning and citation.
       </div>
     );
+
+  const set = (p: Review) => {
+    setDraft((d) => ({ ...d, ...p }));
+    setSaved(false);
+  };
+
+  const answer = draft.answer ?? item.answer;
+  const cot = draft.cot ?? item.cot;
+  const edited = draft.answer !== undefined || draft.cot !== undefined;
+
+  const missing: string[] = [];
+  if (!draft.correct) missing.push("Correct?");
+  if (!draft.grounded) missing.push("Grounded?");
+  if (!draft.complete) missing.push("Complete?");
+  if (!draft.tone) missing.push("Tone & format");
+  if (!draft.rating) missing.push("Overall rating");
+  const canSave = missing.length === 0;
+
+  const dirty = JSON.stringify(draft) !== JSON.stringify(review);
+
+  const save = () => {
+    onChange({ ...draft, edited });
+    setSaved(true);
+    toast.success("Saved");
+    window.setTimeout(() => setSaved(false), 2500);
+  };
 
   if (item.manual)
     return (
@@ -284,26 +436,6 @@ export function ReviewPanel({
       </div>
     );
 
-  const set = (p: Review) => {
-    setDraft((d) => ({ ...d, ...p }));
-    setSaved(false);
-  };
-
-  const answer = draft.answer ?? item.answer;
-  const cot = draft.cot ?? item.cot;
-  const edited = draft.answer !== undefined || draft.cot !== undefined;
-
-  const missing: string[] = [];
-  if (!draft.correct) missing.push("Correct?");
-  if (!draft.grounded) missing.push("Grounded?");
-  if (!draft.complete) missing.push("Complete?");
-  if (!draft.tone) missing.push("Tone & format");
-  if (!draft.ship) missing.push("Ship as-is?");
-  if (!draft.rating) missing.push("Overall rating");
-  const canSave = missing.length === 0;
-
-  const dirty = JSON.stringify(draft) !== JSON.stringify(review);
-
   return (
     <div className="flex h-full flex-col overflow-y-auto p-6 pb-24">
       <div className="mb-4 flex flex-wrap items-center gap-2 text-[0.7rem] font-medium">
@@ -342,146 +474,33 @@ export function ReviewPanel({
       <h2 className="text-xl leading-snug font-semibold">{item.question}</h2>
       <p className="mt-2 text-xs text-muted-foreground">{citationLine(item)}</p>
 
-      <div className="mt-5 space-y-4">
-        <Editable
-          label="Answer"
-          value={answer}
-          original={item.answer}
-          onApply={(v) => set({ answer: v })}
-        />
-        <Editable
-          label="CoT"
-          collapsible
-          value={cot}
-          original={item.cot}
-          onApply={(v) => set({ cot: v })}
-        />
-
-        {item.chunkContent && (
-          <Collapsible title={`Source Chunk · ${item.chunkName || "chunk"}`}>
-            <Block text={item.chunkContent} />
-          </Collapsible>
-        )}
-
-        <section className="panel space-y-4 p-5">
-          <h3 className="font-display text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-            Evaluation
-          </h3>
-
-          <Choice
-            title="Correct?"
-            hint="Is the answer factually right?"
-            options={["Yes", "No", "Can't tell"]}
-            value={draft.correct}
-            onSelect={(v) => set({ correct: v })}
+      <div className="mt-5 grid gap-4 lg:grid-cols-[3fr_1fr]">
+        <div className="min-w-0 space-y-4">
+          <Editable
+            label="Answer"
+            value={answer}
+            original={item.answer}
+            onApply={(v) => set({ answer: v })}
           />
-          <Choice
-            title="Grounded?"
-            hint="Everything in the answer is supported by the source."
-            options={["Yes", "No", "Can't tell"]}
-            value={draft.grounded}
-            onSelect={(v) => set({ grounded: v })}
-          />
-          <Choice
-            title="Complete?"
-            hint="Does it answer exactly what was asked?"
-            options={["Fully answers", "Partial", "Answers more than asked"]}
-            value={draft.complete}
-            onSelect={(v) => set({ complete: v })}
-          />
-          <Choice
-            title="Tone & format right?"
-            hint="Right style and length for a training example."
-            options={["Yes", "No", "Can't tell"]}
-            value={draft.tone}
-            onSelect={(v) => set({ tone: v })}
-          />
-          <Choice
-            title="Would you ship this as-is?"
-            options={["Pass", "Reject"]}
-            value={draft.ship}
-            onSelect={(v) => set({ ship: v })}
+          <Editable
+            label="Chain of thought"
+            collapsible
+            value={cot}
+            original={item.cot}
+            onApply={(v) => set({ cot: v })}
           />
 
-          <div className="border-t border-border pt-4">
-            <p className="text-sm font-semibold">Quick verdict</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <button
-                onClick={() => set({ liked: draft.liked === "up" ? null : "up" })}
-                className={`inline-flex items-center gap-1.5 rounded-md border px-4 py-2 text-xs font-semibold ${
-                  draft.liked === "up"
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border hover:bg-secondary"
-                }`}
-              >
-                <ThumbsUp className="size-3.5" /> Liked
-              </button>
-              <button
-                onClick={() => set({ liked: draft.liked === "down" ? null : "down" })}
-                className={`inline-flex items-center gap-1.5 rounded-md border px-4 py-2 text-xs font-semibold ${
-                  draft.liked === "down"
-                    ? "border-destructive bg-destructive text-destructive-foreground"
-                    : "border-border hover:bg-secondary"
-                }`}
-              >
-                <ThumbsDown className="size-3.5" /> Disliked
-              </button>
-            </div>
-          </div>
-
-          <div className="border-t border-border pt-4">
-            <p className="text-sm font-semibold">Overall rating</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">How good is this pair, 1–5?</p>
-            <div className="mt-2 flex items-center gap-1">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <button
-                  key={n}
-                  aria-label={`${n} star`}
-                  onClick={() => set({ rating: draft.rating === n ? 0 : n })}
-                >
-                  <Star
-                    className={`size-6 transition-transform hover:scale-110 ${
-                      (draft.rating ?? 0) >= n ? "fill-gold text-gold" : "text-muted-foreground/40"
-                    }`}
-                  />
-                </button>
-              ))}
-              <span className="ml-2 text-xs text-muted-foreground">
-                {draft.rating ? `${draft.rating} / 5` : "not rated"}
-              </span>
-            </div>
-          </div>
-
-          <div className="border-t border-border pt-4">
-            <p className="text-sm font-semibold">Comments</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">Anything else worth noting.</p>
-            <textarea
-              value={draft.comment ?? ""}
-              onChange={(e) => set({ comment: e.target.value })}
-              placeholder="Comments…"
-              rows={3}
-              className="mt-2 w-full resize-y rounded-lg border border-input bg-background p-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-        </section>
-
-        <div className="sticky bottom-0 -mx-6 border-t border-border bg-card/95 px-6 py-4 backdrop-blur">
-          <div className="flex items-center justify-end">
-            <button
-              disabled={!canSave || (!dirty && saved)}
-              onClick={() => {
-                onChange({ ...draft, edited });
-                setSaved(true);
-                toast.success("Saved");
-                window.setTimeout(() => setSaved(false), 2500);
-              }}
-              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-40"
-            >
-              <Check className="size-4" /> {saved ? "Saved" : "Save"}
-            </button>
-          </div>
+          {item.chunkContent && (
+            <Collapsible title={`Source Chunk · ${item.chunkName || "chunk"}`}>
+              <Block text={item.chunkContent} />
+            </Collapsible>
+          )}
         </div>
+
+        <EvaluationFields draft={draft} onSet={set} />
       </div>
+
+      <SaveBar canSave={canSave} dirty={dirty} saved={saved} onSave={save} />
     </div>
   );
 }

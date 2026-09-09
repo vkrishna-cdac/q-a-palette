@@ -15,7 +15,6 @@ import {
   FolderOpen,
   Plus,
   X,
-  List,
 } from "lucide-react";
 import {
   toItems,
@@ -53,6 +52,11 @@ export const Route = createFileRoute("/")({
 });
 
 const SUBJECT_ORDER = ["Goods", "Works", "Services"];
+const SUBJECT_LABEL: Record<string, string> = {
+  Goods: "MANUAL FOR PROCUREMENT OF GOODS",
+  Works: "MANUAL FOR PROCUREMENT OF WORKS",
+  Services: "MANUAL FOR PROCUREMENT OF CONSULTANCY & OTHER SERVICES",
+};
 const REVIEW_KEY = "qa-reviews-v1";
 const DATA_KEY = "qa-dataset-v1";
 
@@ -65,11 +69,17 @@ const SUBJECT_META: Record<string, { icon: React.ElementType; color: string }> =
 function AddQuestionPage({
   onSubmit,
   onClose,
+  initialSubject,
 }: {
   onSubmit: (v: { subject: string; question: string; answer: string; remarks: string }) => void;
   onClose: () => void;
+  initialSubject?: string | undefined;
 }) {
-  const [subject, setSubject] = useState("Goods");
+  const [subject, setSubject] = useState(initialSubject ?? "Goods");
+
+  useEffect(() => {
+    if (initialSubject) setSubject(initialSubject);
+  }, [initialSubject]);
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [remarks, setRemarks] = useState("");
@@ -96,17 +106,9 @@ function AddQuestionPage({
           <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Category
           </label>
-          <select
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            className="mt-1 w-full max-w-xs rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-          >
-            {SUBJECT_ORDER.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
+          <div className="mt-1 w-full max-w-xs rounded-md border border-input bg-secondary px-3 py-2 text-sm font-medium">
+            {SUBJECT_LABEL[subject] ?? subject}
+          </div>
         </div>
         <div>
           <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -174,7 +176,6 @@ function AddQuestionPage({
 function Home() {
   const [rows, setRows] = useState<Row[]>([]);
   const [showAdd, setShowAdd] = useState(false);
-  const [showAdded, setShowAdded] = useState(false);
   const items = useMemo(() => toItems(rows), [rows]);
   const [reviews, setReviews] = useState<ReviewMap>({});
   const [subject, setSubject] = useState<string | null>(null);
@@ -241,13 +242,7 @@ function Home() {
     );
   }, [items, subject, section, query]);
 
-  const shown = useMemo(() => {
-    if (!showAdded) return visible;
-    const q = query.trim().toLowerCase();
-    return addedItems.filter(
-      (i) => !q || i.question.toLowerCase().includes(q) || i.answer.toLowerCase().includes(q),
-    );
-  }, [showAdded, visible, addedItems, query]);
+  const shown = visible;
 
   const current = shown.find((i) => i.id === selected) ?? null;
   const currentIndex = current ? shown.findIndex((i) => i.id === current.id) : -1;
@@ -299,15 +294,6 @@ function Home() {
 
   const goHome = () => {
     setShowAdd(false);
-    setShowAdded(false);
-    setSubject(null);
-    setSection(null);
-    setSelected(null);
-    setQuery("");
-  };
-  const goAdded = () => {
-    setShowAdd(false);
-    setShowAdded(true);
     setSubject(null);
     setSection(null);
     setSelected(null);
@@ -315,7 +301,6 @@ function Home() {
   };
   const goSubject = (s: string) => {
     setShowAdd(false);
-    setShowAdded(false);
     setSubject(s);
     setSection(null);
     setSelected(null);
@@ -329,22 +314,16 @@ function Home() {
 
   const crumbs: { label: string; onClick?: () => void }[] = showAdd
     ? [{ label: "Source Document", onClick: goHome }, { label: "Add question" }]
-    : showAdded
-      ? [
-          { label: "Source Document", onClick: goHome },
-          ...(current ? [{ label: "Added Questions", onClick: goAdded }] : []),
-          ...(current ? [{ label: "Question" }] : [{ label: "Added Questions" }]),
-        ]
-      : [
-          { label: "Source Document", ...(subject ? { onClick: goHome } : {}) },
-          ...(subject
-            ? [{ label: subject, ...(section ? { onClick: () => goSubject(subject) } : {}) }]
-            : []),
-          ...(section
-            ? [{ label: section, ...(current ? { onClick: () => goSection(section) } : {}) }]
-            : []),
-          ...(current ? [{ label: "Question" }] : []),
-        ];
+    : [
+        { label: "Source Document", ...(subject ? { onClick: goHome } : {}) },
+        ...(subject
+          ? [{ label: subject, ...(section ? { onClick: () => goSubject(subject) } : {}) }]
+          : []),
+        ...(section
+          ? [{ label: section, ...(current ? { onClick: () => goSection(section) } : {}) }]
+          : []),
+        ...(current ? [{ label: "Question" }] : []),
+      ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -405,7 +384,11 @@ function Home() {
       <main className="mx-auto max-w-6xl px-6 py-8">
         {showAdd ? (
           <div className="mx-auto mb-6 max-w-3xl">
-            <AddQuestionPage onSubmit={addQuestion} onClose={() => setShowAdd(false)} />
+            <AddQuestionPage
+              onSubmit={addQuestion}
+              onClose={() => setShowAdd(false)}
+              initialSubject={subject ?? undefined}
+            />
           </div>
         ) : items.length === 0 ? (
           <div className="mx-auto mt-16 max-w-md rounded-2xl border border-dashed border-border bg-card p-10 text-center shadow-sm">
@@ -447,7 +430,7 @@ function Home() {
               ))}
             </nav>
 
-            {!subject && !showAdded && (
+            {!subject && (
               <>
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div className="inline-flex items-center gap-3 rounded-xl border border-border bg-card px-5 py-3 shadow-sm">
@@ -476,7 +459,9 @@ function Home() {
                         >
                           <Icon className="size-7" />
                         </span>
-                        <h2 className="text-2xl font-semibold tracking-tight">{subj}</h2>
+                        <h2 className="min-h-[2.75rem] text-sm font-semibold leading-tight tracking-tight">
+                          {SUBJECT_LABEL[subj] ?? subj}
+                        </h2>
                         <div className="mt-6 flex items-end justify-between">
                           <span className="text-3xl font-bold">
                             {total}{" "}
@@ -493,53 +478,6 @@ function Home() {
                     );
                   })}
                 </div>
-                {(itemsWithoutManual.length > 0 || addedItems.length > 0) && (
-                  <div className="mt-6 grid gap-6 sm:grid-cols-2">
-                    {addedItems.length > 0 && (
-                      <button
-                        onClick={goAdded}
-                        className="group flex w-full flex-col rounded-2xl border border-border bg-card p-6 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
-                      >
-                        <span className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow">
-                          <List className="size-7" />
-                        </span>
-                        <h2 className="text-2xl font-semibold tracking-tight">Added questions</h2>
-                        <div className="mt-6 flex items-end justify-between">
-                          <span className="text-3xl font-bold">
-                            {addedItems.length}{" "}
-                            <span className="text-sm font-medium text-muted-foreground">
-                              Q/A pairs
-                            </span>
-                          </span>
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
-                            Open
-                            <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-                          </span>
-                        </div>
-                      </button>
-                    )}
-                    {itemsWithoutManual.length > 0 && (
-                      <button
-                        onClick={() => setShowAdd(true)}
-                        className="group flex w-full flex-col rounded-2xl border border-border bg-card p-6 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
-                      >
-                        <span className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-blue-600 text-primary-foreground shadow">
-                          <Plus className="size-7" />
-                        </span>
-                        <h2 className="text-2xl font-semibold tracking-tight">Add question</h2>
-                        <div className="mt-6 flex items-end justify-between">
-                          <span className="text-sm font-medium text-muted-foreground">
-                            Create a new manual question
-                          </span>
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
-                            Open
-                            <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-                          </span>
-                        </div>
-                      </button>
-                    )}
-                  </div>
-                )}
               </>
             )}
 
@@ -560,14 +498,46 @@ function Home() {
                     <ChevronRight className="mt-0.5 size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
                   </button>
                 ))}
+                {addedItems.filter((i) => i.subject === subject).length > 0 && (
+                  <button
+                    onClick={() => goSection("Added Questions")}
+                    className="group flex items-start gap-3 rounded-xl border border-border bg-card p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+                  >
+                    <FolderOpen className="mt-0.5 size-5 shrink-0 text-primary" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold leading-6">Added Questions</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {addedItems.filter((i) => i.subject === subject).length} pairs
+                      </p>
+                    </div>
+                    <ChevronRight className="mt-0.5 size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowAdd(true)}
+                  className="group flex items-start gap-3 rounded-xl border border-dashed border-primary/30 bg-card p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:bg-secondary/30"
+                >
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-primary-foreground">
+                    <Plus className="size-5" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold leading-6">Add question</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Create a new question in {SUBJECT_LABEL[subject] ?? subject}
+                    </p>
+                  </div>
+                  <ChevronRight className="mt-0.5 size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                </button>
                 {sections.length === 0 && (
-                  <p className="text-sm text-muted-foreground">No sections in this subject.</p>
+                  <p className="col-span-full text-sm text-muted-foreground">
+                    No sections in this subject.
+                  </p>
                 )}
               </div>
             )}
 
             {/* Level 3 — question list */}
-            {(showAdded || (subject && section)) && !current && (
+            {subject && section && !current && (
               <div className="rounded-2xl border border-border bg-card shadow-sm">
                 <div className="border-b border-border p-4">
                   <div className="relative">
@@ -575,16 +545,14 @@ function Home() {
                     <input
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
-                      placeholder={
-                        showAdded ? "Search added questions" : "Search questions in this section"
-                      }
+                      placeholder="Search questions in this section"
                       className="w-full rounded-md border border-input bg-background py-2 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring"
                     />
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">{shown.length} pairs</p>
                 </div>
                 <ul className="divide-y divide-border">
-                  {shown.map((it) => {
+                  {shown.map((it, idx) => {
                     const r = reviews[it.id] ?? {};
                     return (
                       <li key={it.id}>
@@ -592,6 +560,9 @@ function Home() {
                           onClick={() => setSelected(it.id)}
                           className="flex w-full items-start gap-3 px-5 py-4 text-left transition-colors hover:bg-secondary/70"
                         >
+                          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground">
+                            {idx + 1}
+                          </span>
                           <div className="min-w-0 flex-1">
                             <p className="text-[0.92rem] font-medium leading-6">{it.question}</p>
                             <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[0.7rem] text-muted-foreground">

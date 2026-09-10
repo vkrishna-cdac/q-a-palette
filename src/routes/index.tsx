@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ChevronRight,
   FileSpreadsheet,
-  Upload,
   Download,
   Search,
   FileText,
@@ -16,9 +15,9 @@ import {
   Plus,
   X,
 } from "lucide-react";
+import Papa from "papaparse";
 import {
   toItems,
-  parseFile,
   exportCsv,
   exportXlsx,
   citationLine,
@@ -59,6 +58,12 @@ const SUBJECT_LABEL: Record<string, string> = {
 };
 const REVIEW_KEY = "qa-reviews-v1";
 const DATA_KEY = "qa-dataset-v1";
+
+// Tile colours for the Level-3 question list at src/routes/index.tsx:564.
+// EDITED: answer/cot was changed. EVALUATED: has any evaluation field but not edited.
+// Change the classes below to tweak colours (e.g. bg-amber-50, bg-emerald-50, bg-gold/15).
+const EDITED_TILE_CLASS = "bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/20";
+const EVALUATED_TILE_CLASS = "bg-green-50 hover:bg-green-100 dark:bg-green-950/20";
 
 const SUBJECT_META: Record<string, { icon: React.ElementType; color: string }> = {
   Goods: { icon: Package, color: "bg-blue-600" },
@@ -176,23 +181,71 @@ function AddQuestionPage({
 function Home() {
   const [rows, setRows] = useState<Row[]>([]);
   const [showAdd, setShowAdd] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const items = useMemo(() => toItems(rows), [rows]);
   const [reviews, setReviews] = useState<ReviewMap>({});
   const [subject, setSubject] = useState<string | null>(null);
   const [section, setSection] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     try {
       const r = localStorage.getItem(REVIEW_KEY);
       if (r) setReviews(JSON.parse(r));
-      const d = localStorage.getItem(DATA_KEY);
-      if (d) setRows(JSON.parse(d));
     } catch {
       /* ignore */
     }
+
+    const loadDefault = async () => {
+      try {
+        let text: string | null = null;
+        for (const url of ["/1000QA.csv", "/storage/1000QA.csv"]) {
+          try {
+            const res = await fetch(url);
+            if (res.ok) {
+              text = await res.text();
+              break;
+            }
+          } catch {
+            /* try next url */
+          }
+        }
+        if (text === null) throw new Error("Default dataset not found");
+        const parsed = Papa.parse<Row>(text, { header: true, skipEmptyLines: true });
+        const rowsFromCsv = (parsed.data as Row[]).filter((r) =>
+          Object.keys(r).some((k) => String((r as Record<string, unknown>)[k] ?? "").trim() !== ""),
+        );
+        let manualRows: Row[] = [];
+        try {
+          const saved = localStorage.getItem(DATA_KEY);
+          if (saved) {
+            const savedRows = JSON.parse(saved) as Row[];
+            manualRows = savedRows.filter((r) => r["__manual"] === true);
+          }
+        } catch {
+          /* ignore */
+        }
+        const merged = [...rowsFromCsv, ...manualRows];
+        setRows(merged);
+        try {
+          localStorage.setItem(DATA_KEY, JSON.stringify(merged));
+        } catch {
+          /* dataset too large to cache */
+        }
+      } catch (e) {
+        console.error("Failed to load default dataset", e);
+        try {
+          const d = localStorage.getItem(DATA_KEY);
+          if (d) setRows(JSON.parse(d));
+        } catch {
+          /* ignore */
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    void loadDefault();
   }, []);
 
   useEffect(() => {
@@ -267,15 +320,6 @@ function Home() {
     }
   }
 
-  async function onImport(file: File) {
-    const parsed = await parseFile(file);
-    persist(parsed);
-    setSubject(null);
-    setSection(null);
-    setSelected(null);
-    setQuery("");
-  }
-
   function addQuestion(v: { subject: string; question: string; answer: string; remarks: string }) {
     const row: Row = {
       questionId: `manual-${Date.now()}`,
@@ -336,31 +380,15 @@ function Home() {
             <div>
               <h1 className="text-base font-semibold leading-tight">Q&amp;A Review Console</h1>
               <p className="text-xs text-muted-foreground">
-                {itemsWithoutManual.length
-                  ? `${itemsWithoutManual.length} pairs loaded`
-                  : "No data imported yet"}
+                {isLoading
+                  ? "Loading dataset…"
+                  : itemsWithoutManual.length
+                    ? `${itemsWithoutManual.length} pairs loaded`
+                    : "No data available"}
               </p>
             </div>
           </button>
           <div className="ml-auto flex flex-wrap items-center gap-2">
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".csv,.xlsx,.xls"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) void onImport(f);
-                e.target.value = "";
-              }}
-            />
-            <button
-              onClick={() => fileRef.current?.click()}
-              className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs font-semibold hover:bg-secondary"
-            >
-              <Upload className="size-3.5" /> Import
-            </button>
-
             {items.length > 0 && (
               <>
                 <button
@@ -390,24 +418,23 @@ function Home() {
               initialSubject={subject ?? undefined}
             />
           </div>
+        ) : isLoading ? (
+          <div className="mx-auto mt-16 max-w-md rounded-2xl border border-border bg-card p-10 text-center shadow-sm">
+            <span className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-secondary text-primary">
+              <FileText className="size-7 animate-pulse" />
+            </span>
+            <h2 className="text-lg font-semibold">Loading dataset…</h2>
+            <p className="mt-2 text-sm text-muted-foreground">Fetching storage/1000QA.csv</p>
+          </div>
         ) : items.length === 0 ? (
           <div className="mx-auto mt-16 max-w-md rounded-2xl border border-dashed border-border bg-card p-10 text-center shadow-sm">
             <span className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-secondary text-primary">
-              <Upload className="size-7" />
+              <FileText className="size-7" />
             </span>
-            <h2 className="text-lg font-semibold">Import your Q&amp;A dataset</h2>
+            <h2 className="text-lg font-semibold">No data available</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Upload an XLSX or CSV file to start reviewing. Nothing is shown until data is
-              imported.
+              Could not load storage/1000QA.csv. Ensure the file is present in public/.
             </p>
-            <div className="mt-6 flex flex-wrap justify-center gap-2">
-              <button
-                onClick={() => fileRef.current?.click()}
-                className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
-              >
-                <Upload className="size-4" /> Choose file
-              </button>
-            </div>
           </div>
         ) : (
           <>
@@ -554,11 +581,20 @@ function Home() {
                 <ul className="divide-y divide-border">
                   {shown.map((it, idx) => {
                     const r = reviews[it.id] ?? {};
+                    const isEvaluated = !!(
+                      r.correct ||
+                      r.grounded ||
+                      r.complete ||
+                      r.tone ||
+                      r.rating ||
+                      r.comment?.trim() ||
+                      r.liked
+                    );
                     return (
                       <li key={it.id}>
                         <button
                           onClick={() => setSelected(it.id)}
-                          className="flex w-full items-start gap-3 px-5 py-4 text-left transition-colors hover:bg-secondary/70"
+                          className={`flex w-full items-start gap-3 px-5 py-4 text-left transition-colors hover:bg-secondary/70 ${r.edited ? EDITED_TILE_CLASS : isEvaluated ? EVALUATED_TILE_CLASS : ""}`}
                         >
                           <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground">
                             {idx + 1}

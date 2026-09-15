@@ -14,6 +14,16 @@ import {
 import { citationLine, type QAItem, type Review } from "@/lib/qa";
 import { toast } from "sonner";
 
+// Professional section tints for the QA preview page.
+// Edit these classes to tweak colours, or remove the `${TINT_...}` usage below to revert to plain panels.
+const TINT_ANSWER = "border-l-4 border-l-blue-500 bg-blue-50/40 dark:bg-blue-950/20";
+const TINT_COT = "border-l-4 border-l-amber-500 bg-amber-50/40 dark:bg-amber-950/20";
+const TINT_SOURCE = "border-l-4 border-l-teal-500 bg-teal-50/40 dark:bg-teal-950/20";
+const TINT_EVAL = "border-l-4 border-l-violet-500 bg-violet-50/30 dark:bg-violet-950/15";
+const TINT_CATEGORY = "border-l-4 border-l-slate-400 bg-slate-50/50 dark:bg-slate-900/20";
+const TINT_QUESTION = "border-l-4 border-l-indigo-500 bg-indigo-50/40 dark:bg-indigo-950/20";
+const TINT_REMARKS = "border-l-4 border-l-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/20";
+
 function Block({ text }: { text: string }) {
   if (!text) return <p className="text-sm italic text-muted-foreground">No content in source.</p>;
   return (
@@ -31,14 +41,16 @@ function Collapsible({
   title,
   defaultOpen = false,
   children,
+  accentClass,
 }: {
   title: string;
   defaultOpen?: boolean;
   children: React.ReactNode;
+  accentClass?: string;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <section className="panel overflow-hidden">
+    <section className={`panel overflow-hidden ${accentClass ?? ""}`}>
       <button
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center gap-2 px-5 py-4 text-left hover:bg-secondary/60"
@@ -61,12 +73,14 @@ function Editable({
   original,
   onApply,
   collapsible = false,
+  accentClass,
 }: {
   label: string;
   value: string;
   original: string;
   onApply: (v: string | undefined) => void;
   collapsible?: boolean;
+  accentClass?: string;
 }) {
   const [editing, setEditing] = useState(false);
   const [open, setOpen] = useState(!collapsible);
@@ -77,8 +91,10 @@ function Editable({
     if (collapsible) setOpen(false);
   }, [value, label, collapsible]);
 
+  const isEmpty = draft.trim().length === 0;
+
   return (
-    <section className="panel p-5">
+    <section className={`panel p-5 ${accentClass ?? ""}`}>
       <header className="mb-3 flex items-center justify-between gap-3">
         {collapsible ? (
           <button onClick={() => setOpen((o) => !o)} className="flex items-center gap-2 text-left">
@@ -97,11 +113,17 @@ function Editable({
         {editing ? (
           <div className="flex gap-2">
             <button
+              disabled={isEmpty}
               onClick={() => {
+                if (isEmpty) {
+                  toast.error(`${label} cannot be empty`);
+                  return;
+                }
                 onApply(draft);
                 setEditing(false);
               }}
-              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90"
+              title={isEmpty ? `${label} cannot be empty` : undefined}
+              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-40"
             >
               <Check className="size-3.5" /> Apply
             </button>
@@ -140,12 +162,17 @@ function Editable({
       </header>
       {open &&
         (editing ? (
-          <textarea
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            rows={Math.min(24, Math.max(6, draft.split("\n").length + 3))}
-            className="w-full resize-y rounded-lg border border-input bg-background p-3 text-[0.9rem] leading-7 outline-none focus:ring-2 focus:ring-ring"
-          />
+          <div>
+            <textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              rows={Math.min(24, Math.max(6, draft.split("\n").length + 3))}
+              className={`w-full resize-y rounded-lg border bg-background p-3 text-[0.9rem] leading-7 outline-none focus:ring-2 focus:ring-ring ${isEmpty ? "border-destructive focus:ring-destructive" : "border-input focus:ring-ring"}`}
+            />
+            {isEmpty && (
+              <p className="mt-2 text-xs font-medium text-destructive">{label} cannot be empty</p>
+            )}
+          </div>
         ) : (
           <Block text={value} />
         ))}
@@ -189,9 +216,17 @@ function Choice({
   );
 }
 
-function EvaluationFields({ draft, onSet }: { draft: Review; onSet: (p: Review) => void }) {
+function EvaluationFields({
+  draft,
+  onSet,
+  accentClass,
+}: {
+  draft: Review;
+  onSet: (p: Review) => void;
+  accentClass?: string;
+}) {
   return (
-    <section className="panel space-y-4 p-5">
+    <section className={`panel space-y-4 p-5 ${accentClass ?? ""}`}>
       <h3 className="font-display text-sm font-semibold uppercase tracking-widest text-muted-foreground">
         Evaluation
       </h3>
@@ -354,17 +389,24 @@ export function ReviewPanel({
   const cot = draft.cot ?? item.cot;
   const edited = draft.answer !== undefined || draft.cot !== undefined;
 
+  const isAnswerEmpty = answer.trim().length === 0;
+
   const missing: string[] = [];
+  if (isAnswerEmpty) missing.push("Answer cannot be empty");
   if (!draft.correct) missing.push("Correct?");
   if (!draft.grounded) missing.push("Grounded?");
   if (!draft.complete) missing.push("Complete?");
   if (!draft.tone) missing.push("Tone & format");
   if (!draft.rating) missing.push("Overall rating");
-  const canSave = missing.length === 0;
+  const canSave = missing.length === 0 && !isAnswerEmpty;
 
   const dirty = JSON.stringify(draft) !== JSON.stringify(review);
 
   const save = () => {
+    if (isAnswerEmpty) {
+      toast.error("Answer cannot be empty");
+      return;
+    }
     onChange({ ...draft, edited });
     setSaved(true);
     toast.success("Saved");
@@ -402,13 +444,13 @@ export function ReviewPanel({
           </div>
         </div>
         <div className="mt-5 space-y-4">
-          <section className="panel p-5">
+          <section className={`panel p-5 ${TINT_CATEGORY}`}>
             <h3 className="font-display text-sm font-semibold uppercase tracking-widest text-muted-foreground">
               Category
             </h3>
             <p className="mt-3 text-[0.92rem] font-medium leading-7">{item.subject || "—"}</p>
           </section>
-          <section className="panel p-5">
+          <section className={`panel p-5 ${TINT_QUESTION}`}>
             <h3 className="font-display text-sm font-semibold uppercase tracking-widest text-muted-foreground">
               Question
             </h3>
@@ -416,7 +458,7 @@ export function ReviewPanel({
               {item.question || "—"}
             </p>
           </section>
-          <section className="panel p-5">
+          <section className={`panel p-5 ${TINT_ANSWER}`}>
             <h3 className="font-display text-sm font-semibold uppercase tracking-widest text-muted-foreground">
               Answer
             </h3>
@@ -424,7 +466,7 @@ export function ReviewPanel({
               {item.answer || "—"}
             </p>
           </section>
-          <section className="panel p-5">
+          <section className={`panel p-5 ${TINT_REMARKS}`}>
             <h3 className="font-display text-sm font-semibold uppercase tracking-widest text-muted-foreground">
               Remarks
             </h3>
@@ -481,6 +523,7 @@ export function ReviewPanel({
             value={answer}
             original={item.answer}
             onApply={(v) => set({ answer: v })}
+            accentClass={TINT_ANSWER}
           />
           <Editable
             label="Chain of thought"
@@ -488,16 +531,20 @@ export function ReviewPanel({
             value={cot}
             original={item.cot}
             onApply={(v) => set({ cot: v })}
+            accentClass={TINT_COT}
           />
 
           {item.chunkContent && (
-            <Collapsible title={`Source Chunk · ${item.chunkName || "chunk"}`}>
+            <Collapsible
+              title={`Source Chunk · ${item.chunkName || "chunk"}`}
+              accentClass={TINT_SOURCE}
+            >
               <Block text={item.chunkContent} />
             </Collapsible>
           )}
         </div>
 
-        <EvaluationFields draft={draft} onSet={set} />
+        <EvaluationFields draft={draft} onSet={set} accentClass={TINT_EVAL} />
       </div>
 
       <SaveBar canSave={canSave} dirty={dirty} saved={saved} onSave={save} />

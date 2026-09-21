@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
 import {
-  Star,
-  ThumbsUp,
-  ThumbsDown,
   Pencil,
   Check,
   X,
@@ -10,6 +7,9 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Info,
+  ThumbsUp,
+  ThumbsDown,
 } from "lucide-react";
 import { citationLine, type QAItem, type Review } from "@/lib/qa";
 import { toast } from "sonner";
@@ -195,8 +195,14 @@ function Choice({
 }) {
   return (
     <div className="border-t border-border pt-4 first:border-0 first:pt-0">
-      <p className="text-sm font-semibold">{title}</p>
-      {hint && <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>}
+      <div className="flex items-center gap-1.5">
+        <p className="text-sm font-semibold">{title}</p>
+        {hint && (
+          <span title={hint} className="cursor-help text-muted-foreground/70">
+            <Info className="size-3.5" />
+          </span>
+        )}
+      </div>
       <div className="mt-2 flex flex-wrap gap-2">
         {options.map((o) => (
           <button
@@ -231,37 +237,8 @@ function EvaluationFields({
         Evaluation
       </h3>
 
-      <Choice
-        title="Correct?"
-        hint="Is the answer factually right?"
-        options={["Yes", "No", "Can't tell"]}
-        value={draft.correct}
-        onSelect={(v) => onSet({ correct: v })}
-      />
-      <Choice
-        title="Is the reference from the source correct?"
-        hint="Everything in the answer is supported by the source."
-        options={["Yes", "No", "Can't tell"]}
-        value={draft.grounded}
-        onSelect={(v) => onSet({ grounded: v })}
-      />
-      <Choice
-        title="Complete?"
-        hint="Does it answer exactly what was asked?"
-        options={["Fully answers", "Partial", "Answers more than asked"]}
-        value={draft.complete}
-        onSelect={(v) => onSet({ complete: v })}
-      />
-      <Choice
-        title="Is the answer language as per NRL style?"
-        hint="Right style and length for a training example."
-        options={["Yes", "No", "Can't tell"]}
-        value={draft.tone}
-        onSelect={(v) => onSet({ tone: v })}
-      />
-
-      <div className="border-t border-border pt-4">
-        <p className="text-sm font-semibold">Quick verdict</p>
+      <div>
+        <p className="text-sm font-semibold">Overall verdict</p>
         <div className="mt-2 flex flex-wrap gap-2">
           <button
             onClick={() => onSet({ liked: draft.liked === "up" ? null : "up" })}
@@ -286,28 +263,32 @@ function EvaluationFields({
         </div>
       </div>
 
-      <div className="border-t border-border pt-4">
-        <p className="text-sm font-semibold">Overall rating</p>
-        <p className="mt-0.5 text-xs text-muted-foreground">How good is this pair, 1–5?</p>
-        <div className="mt-2 flex items-center gap-1">
-          {[1, 2, 3, 4, 5].map((n) => (
-            <button
-              key={n}
-              aria-label={`${n} star`}
-              onClick={() => onSet({ rating: draft.rating === n ? 0 : n })}
-            >
-              <Star
-                className={`size-6 transition-transform hover:scale-110 ${
-                  (draft.rating ?? 0) >= n ? "fill-gold text-gold" : "text-muted-foreground/40"
-                }`}
-              />
-            </button>
-          ))}
-          <span className="ml-2 text-xs text-muted-foreground">
-            {draft.rating ? `${draft.rating} / 5` : "not rated"}
-          </span>
-        </div>
-      </div>
+      <Choice
+        title="Is the answer factually right?"
+        options={["Yes", "No", "Can't tell"]}
+        value={draft.correct}
+        onSelect={(v) => onSet({ correct: v })}
+      />
+      <Choice
+        title="Is the reference from the source correct?"
+        hint="Everything in the answer is supported by the source."
+        options={["Yes", "No", "Can't tell"]}
+        value={draft.grounded}
+        onSelect={(v) => onSet({ grounded: v })}
+      />
+      <Choice
+        title="Does it answer exactly what was asked?"
+        options={["Fully answers", "Partial", "Answers more than asked"]}
+        value={draft.complete}
+        onSelect={(v) => onSet({ complete: v })}
+      />
+      <Choice
+        title="Is the answer language as per NRL style?"
+        hint="Right style and length for a training example."
+        options={["Yes", "No", "Can't tell"]}
+        value={draft.tone}
+        onSelect={(v) => onSet({ tone: v })}
+      />
 
       <div className="border-t border-border pt-4">
         <p className="text-sm font-semibold">Comments(Optional)</p>
@@ -393,11 +374,11 @@ export function ReviewPanel({
 
   const missing: string[] = [];
   if (isAnswerEmpty) missing.push("Answer cannot be empty");
-  if (!draft.correct) missing.push("Correct?");
+  if (!draft.liked) missing.push("Overall verdict");
+  if (!draft.correct) missing.push("Is the answer factually right?");
   if (!draft.grounded) missing.push("Grounded?");
   if (!draft.complete) missing.push("Complete?");
   if (!draft.tone) missing.push("Tone & format");
-  if (!draft.rating) missing.push("Overall rating");
   const canSave = missing.length === 0 && !isAnswerEmpty;
 
   const dirty = JSON.stringify(draft) !== JSON.stringify(review);

@@ -20,6 +20,10 @@ dist-ssr
 .wrangler/
 .dev.vars
 
+# Local SQLite database (see DATABASE_PATH in CLAUDE.md)
+/data/
+.env
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -9,50 +9,205 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppRouteImport } from './routes/_app'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as AppSubjectIndexRouteImport } from './routes/_app/$subject/index'
+import { Route as AppSubjectAddRouteImport } from './routes/_app/$subject/add'
+import { Route as AppSubjectSectionIndexRouteImport } from './routes/_app/$subject/$section/index'
+import { Route as AppSubjectSectionQuestionIdRouteImport } from './routes/_app/$subject/$section/$questionId'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSubjectIndexRoute = AppSubjectIndexRouteImport.update({
+  id: '/$subject/',
+  path: '/$subject/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSubjectAddRoute = AppSubjectAddRouteImport.update({
+  id: '/$subject/add',
+  path: '/$subject/add',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSubjectSectionIndexRoute = AppSubjectSectionIndexRouteImport.update({
+  id: '/$subject/$section/',
+  path: '/$subject/$section/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSubjectSectionQuestionIdRoute =
+  AppSubjectSectionQuestionIdRouteImport.update({
+    id: '/$subject/$section/$questionId',
+    path: '/$subject/$section/$questionId',
+    getParentRoute: () => AppRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof AppIndexRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/$subject/add': typeof AppSubjectAddRoute
+  '/$subject/': typeof AppSubjectIndexRoute
+  '/$subject/$section/$questionId': typeof AppSubjectSectionQuestionIdRoute
+  '/$subject/$section/': typeof AppSubjectSectionIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/': typeof AppIndexRoute
+  '/$subject/add': typeof AppSubjectAddRoute
+  '/$subject': typeof AppSubjectIndexRoute
+  '/$subject/$section/$questionId': typeof AppSubjectSectionQuestionIdRoute
+  '/$subject/$section': typeof AppSubjectSectionIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/_app/': typeof AppIndexRoute
+  '/_app/$subject/add': typeof AppSubjectAddRoute
+  '/_app/$subject/': typeof AppSubjectIndexRoute
+  '/_app/$subject/$section/$questionId': typeof AppSubjectSectionQuestionIdRoute
+  '/_app/$subject/$section/': typeof AppSubjectSectionIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/register'
+    | '/$subject/add'
+    | '/$subject/'
+    | '/$subject/$section/$questionId'
+    | '/$subject/$section/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/login'
+    | '/register'
+    | '/'
+    | '/$subject/add'
+    | '/$subject'
+    | '/$subject/$section/$questionId'
+    | '/$subject/$section'
+  id:
+    | '__root__'
+    | '/_app'
+    | '/login'
+    | '/register'
+    | '/_app/'
+    | '/_app/$subject/add'
+    | '/_app/$subject/'
+    | '/_app/$subject/$section/$questionId'
+    | '/_app/$subject/$section/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+  LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/': {
+      id: '/_app/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/$subject/': {
+      id: '/_app/$subject/'
+      path: '/$subject'
+      fullPath: '/$subject/'
+      preLoaderRoute: typeof AppSubjectIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/$subject/add': {
+      id: '/_app/$subject/add'
+      path: '/$subject/add'
+      fullPath: '/$subject/add'
+      preLoaderRoute: typeof AppSubjectAddRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/$subject/$section/': {
+      id: '/_app/$subject/$section/'
+      path: '/$subject/$section'
+      fullPath: '/$subject/$section/'
+      preLoaderRoute: typeof AppSubjectSectionIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/$subject/$section/$questionId': {
+      id: '/_app/$subject/$section/$questionId'
+      path: '/$subject/$section/$questionId'
+      fullPath: '/$subject/$section/$questionId'
+      preLoaderRoute: typeof AppSubjectSectionQuestionIdRouteImport
+      parentRoute: typeof AppRoute
     }
   }
 }
 
+interface AppRouteChildren {
+  AppIndexRoute: typeof AppIndexRoute
+  AppSubjectAddRoute: typeof AppSubjectAddRoute
+  AppSubjectIndexRoute: typeof AppSubjectIndexRoute
+  AppSubjectSectionQuestionIdRoute: typeof AppSubjectSectionQuestionIdRoute
+  AppSubjectSectionIndexRoute: typeof AppSubjectSectionIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppIndexRoute: AppIndexRoute,
+  AppSubjectAddRoute: AppSubjectAddRoute,
+  AppSubjectIndexRoute: AppSubjectIndexRoute,
+  AppSubjectSectionQuestionIdRoute: AppSubjectSectionQuestionIdRoute,
+  AppSubjectSectionIndexRoute: AppSubjectSectionIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+  LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

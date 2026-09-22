@@ -22,15 +22,23 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=3000
+ENV DATABASE_PATH=/app/data/app.db
+# JWT_SECRET has no default on purpose — must be set at deploy time (e.g. `docker run -e JWT_SECRET=...`).
 
 # Run as non-root for security
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 # Only runtime artifacts are needed.
-# .output contains server/index.mjs + public assets (Nitro node-server layout)
+# .output contains server/index.mjs + public assets (Nitro node-server layout);
+# better-sqlite3's native binding is traced and copied into .output/server/node_modules automatically.
 # package.json is copied for metadata (no node_modules needed - output is self-contained)
+# drizzle/ holds the SQL migrations, applied automatically on boot by src/server/db.ts.
 COPY --from=builder --chown=appuser:appgroup /app/.output ./.output
 COPY --from=builder --chown=appuser:appgroup /app/package.json ./package.json
+COPY --from=builder --chown=appuser:appgroup /app/drizzle ./drizzle
+
+RUN mkdir -p /app/data && chown appuser:appgroup /app/data
+VOLUME ["/app/data"]
 
 USER appuser
 EXPOSE 3000

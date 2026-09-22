@@ -11,7 +11,10 @@ npm run preview    # serve the build
 npm run lint       # eslint (prettier runs as an eslint rule — lint fails on formatting)
 npm run format     # prettier --write .
 npx tsc --noEmit   # typecheck (no npm script for this)
+npm run db:generate # after editing src/server/schema.ts, writes a SQL migration into drizzle/
 ```
+
+Requires `JWT_SECRET` (and optionally `DATABASE_PATH`, default `./data/app.db`) in the environment — see `.env.example`. `vite dev` loads a local `.env` automatically; Docker/production must pass these as real env vars.
 
 There is no test framework in this repo — no test runner, no test files. Don't invent one; verify changes with `npm run lint`, `npx tsc --noEmit`, and the dev server.
 
@@ -25,9 +28,11 @@ Two constraints from the product brief (README.md) drive most decisions: **only 
 
 ## Architecture
 
-**Everything is client-side.** There is no API, no database, no server function. Files are parsed in the browser (`xlsx` / `papaparse`), state lives in React `useState`, and both the dataset and the reviews are persisted to `localStorage` under `qa-dataset-v1` and `qa-reviews-v1` (see the key constants at the top of `src/routes/index.tsx`). `localStorage.setItem` for the dataset is wrapped in a swallowing `try/catch` because large imports exceed the quota — the app still works in-session when that write fails.
+**Auth and the dataset are server-backed; only reviews are still client-side.** Reviews (ratings/comments/edited answer+cot) live in React state and persist to `localStorage` under `qa-reviews-v1` (`ReviewsProvider` in `src/routes/_app.tsx`) — that's the one piece still staged for a future SQLite move (versioning/audit). The Q&A dataset itself is **not** imported through the UI: `src/server/seed.ts` loads `public/1000QA.csv` once, on first boot, into the `qa_items` SQLite table (via `db.ts` calling `seedQaItemsIfEmpty` after migrations); there is no upload/import feature and none is planned — reviewer-added questions go through `addManualItem` instead, straight into the same table (`manual: true`, `section: "Added Questions"`).
 
-**One route, four levels.** `src/routes/index.tsx` is the whole app. The drill-down is *not* routing — `subject`, `section`, and `selected` are component state, and the breadcrumb is built from them. Adding a real URL for a level means adding files under `src/routes/` (file-based routing; see `src/routes/README.md` for the conventions — `routeTree.gen.ts` is generated, never hand-edited).
+**Auth is server-backed (`src/server/`).** `src/server/schema.ts` defines the Drizzle/SQLite tables — `users`, `refresh_tokens`, `qa_items` — via `better-sqlite3` (`src/server/db.ts`, path from `DATABASE_PATH`, migrations in `drizzle/` applied automatically on boot; `npm run db:generate` regenerates them from the schema). `src/server/auth.ts` holds the crypto primitives (scrypt password hashing, JWT sign/verify via `jose`, refresh-token hashing). `src/server/functions/auth.ts` exposes `register`/`login`/`logout`/`me` as TanStack Start server functions (`createServerFn`), using an access-JWT (15 min) + rotating opaque refresh token (30 days) pattern: each refresh rotates the token and revokes the old one via `replacedBy`; a refresh token presented after it's already been rotated is treated as theft and revokes every active token for that user. Both tokens live in `httpOnly`/`Secure`/`SameSite=Lax` cookies (`qa_access`/`qa_refresh`), never in `localStorage` or a JS-readable form. `src/server/functions/qa.ts` exposes `listItems`/`addManualItem`, both gated behind `authMiddleware`. There are no roles — any authenticated user has full access. Docker's `node-server` build is the only supported deploy target for this (Cloudflare Workers can't open a local SQLite file); the Dockerfile copies `drizzle/` and declares a `/app/data` volume for the database file.
+
+**Real routes, one layout.** The drill-down (Source Document → Subject → Section → Question) is actual file-based routing, not component state: `src/routes/_app.tsx` is a pathless layout (auth guard via `beforeLoad`, loads `qa_items` once via a route `loader` + TanStack Query, renders the header/export buttons/logout and provides reviews via `useReviews()`), and `src/routes/_app/index.tsx` (`/`), `$subject/index.tsx` (`/:subject`), `$subject/add.tsx` (`/:subject/add`), `$subject/$section/index.tsx` (`/:subject/:section`), `$subject/$section/$questionId.tsx` (`/:subject/:section/:questionId`) are the four levels plus the add-question page. Each leaf route reads `itemsQueryOptions` from `_app.tsx` via `useSuspenseQuery` rather than refetching. See `src/routes/README.md` for the file-based routing conventions — `routeTree.gen.ts` is generated, never hand-edited.
 
 **`src/lib/qa.ts` is the data contract.** All import/normalisation/export logic lives here, and touching one half usually means touching the other:
 
@@ -47,6 +52,6 @@ Two constraints from the product brief (README.md) drive most decisions: **only 
 
 **tsconfig is aggressively strict** — `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`, `noPropertyAccessFromIndexSignature`. Consequences you'll hit immediately: optional props are written `foo?: string | undefined`, optional props are passed with conditional spreads (`{...(cond ? { onPrev } : {})}`) rather than `onPrev={cond ? fn : undefined}`, and indexed access returns `T | undefined`.
 
-**Styling is Tailwind v4 CSS-first.** No `tailwind.config.js` — the design system is `@theme inline` plus `:root`/`.dark` custom properties in `src/styles.css`. All colors must be `oklch`. Custom additions beyond shadcn defaults: the `gold` color (ratings, "Edited" badges) and the `panel` `@utility` (card surface + `--shadow-panel`). Adding a semantic color means adding it to `:root`, `.dark`, *and* `@theme inline`.
+**Styling is Tailwind v4 CSS-first.** No `tailwind.config.js` — the design system is `@theme inline` plus `:root`/`.dark` custom properties in `src/styles.css`. All colors must be `oklch`. Custom additions beyond shadcn defaults: the `gold` color (ratings, "Edited" badges) and the `panel` `@utility` (card surface + `--shadow-panel`). Adding a semantic color means adding it to `:root`, `.dark`, _and_ `@theme inline`.
 
 shadcn/ui (new-york, lucide) components live in `src/components/ui/` and are mostly unused scaffolding — the app screens are hand-written Tailwind. `@/*` maps to `src/*`.

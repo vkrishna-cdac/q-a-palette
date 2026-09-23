@@ -1,0 +1,69 @@
+[33me849108[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m updated code
+[33m4d4cca6[m fix:Unable to save empty answer
+[33m3a827e8[m fix:removed-import
+[33m642f998[m fixed the evaluation requirements
+[33m1dd36cf[m chore:fixed fevicon icon
+[33m66054eb[m chore:fixed fevicon icon
+[33mbeca615[m Merge branch 'origin/main' and resolve conflicts: keep updated questions logic and clean branding
+[33m73ce721[m[33m ([m[1;31mupstream/remove-lovable-branding[m[33m)[m Remove Lovable branding, telemetry, icons, and configuration
+[33m9ca6c64[m[33m ([m[1;31mupstream/main[m[33m, [m[1;32mremove-lovable-branding[m[33m)[m list of added questions
+[33m1f9eff2[m list of added questions
+[33mc5574df[m notify users when saved in question preview
+[33m1616b52[m push
+[33mc0d2015[m push
+[33mb186ccc[m Add preview page for questions
+[33ma6e00da[m Changes
+[33m1849d89[m Changes
+[33ma5e8b0f[m Changes
+[33m7883e55[m Changes
+[33mdfa2c2b[m Changes
+[33m2ee515d[m Changes
+[33m77bc4c4[m Added question modal & UI
+[33m5ed4c92[m Changes
+[33m6d2dd3c[m Changes
+[33md451e91[m Changes
+[33mb413b42[m Changes
+[33meac036e[m Changes
+[33m16913d7[m Changes
+[33mfbe5d28[m Changes
+[33m3fd78ba[m Changes
+[33m95c5fdb[m Changes
+[33mfeab5bc[m Changes
+[33medeb845[m working module
+[33md6c33b5[m Add project README
+[33mc6738be[m Added save confirm & merged
+[33m5a0f695[m Changes
+[33med405f9[m Changes
+[33m67cd869[m Changes
+[33m4c818e4[m Refined home review panel UI
+[33m30c4925[m Changes
+[33m9351474[m Changes
+[33mff486d5[m Changes
+[33m7e82826[m Changes
+[33m052dd68[m Changes
+[33m538d384[m Changes
+[33m898a22c[m Simplified nav and preview UI
+[33m0cf9be0[m Changes
+[33m4ab816d[m Changes
+[33m2abd9ff[m Changes
+[33ma501db2[m Changes
+[33m39a7f51[m Prefilled questions with data
+[33ma03a2ab[m Changes
+[33m56988df[m Hid questions on home page
+[33m7bfdd77[m Changes
+[33md63284e[m Updated review UI with blue theme
+[33m8dfb71e[m Changes
+[33mab730c6[m Changes
+[33m69fa0d9[m Changes
+[33m2380577[m Added home UI & review panel
+[33mf7c199f[m Changes
+[33m7e8b4ab[m Changes
+[33m7460a16[m Changes
+[33m4bd3949[m Changes
+[33m94f2392[m Changes
+[33ma4edbe1[m Changes
+[33m44f7baf[m Changes
+[33m5e08f8e[m Changes
+[33m9a53426[m Changes
+[33m5b0f84f[m Changes
+[33m4260d9f[m template: tanstack_start_ts_current-571d16f7cb10

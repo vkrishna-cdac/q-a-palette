@@ -270,21 +270,19 @@ function EvaluationFields({
         onSelect={(v) => onSet({ correct: v })}
       />
       <Choice
-        title="Is the reference from the source correct?"
-        hint="Everything in the answer is supported by the source."
+        title="Does the reference from the source correct?"
         options={["Yes", "No", "Can't tell"]}
         value={draft.grounded}
         onSelect={(v) => onSet({ grounded: v })}
       />
       <Choice
-        title="Does it answer exactly what was asked?"
+        title="Does the answer fully address the given question?"
         options={["Fully answers", "Partial", "Answers more than asked"]}
         value={draft.complete}
         onSelect={(v) => onSet({ complete: v })}
       />
       <Choice
         title="Is the answer language as per NRL style?"
-        hint="Right style and length for a training example."
         options={["Yes", "No", "Can't tell"]}
         value={draft.tone}
         onSelect={(v) => onSet({ tone: v })}

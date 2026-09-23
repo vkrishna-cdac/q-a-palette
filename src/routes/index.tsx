@@ -8,9 +8,7 @@ import {
   FileText,
   Pen,
   Star,
-  Package,
-  HardHat,
-  Headphones,
+  Book,
   FolderOpen,
   Plus,
   X,
@@ -66,9 +64,9 @@ const EDITED_TILE_CLASS = "bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/20";
 const EVALUATED_TILE_CLASS = "bg-green-50 hover:bg-green-100 dark:bg-green-950/20";
 
 const SUBJECT_META: Record<string, { icon: React.ElementType; color: string }> = {
-  Goods: { icon: Package, color: "bg-blue-600" },
-  Works: { icon: HardHat, color: "bg-sky-500" },
-  Services: { icon: Headphones, color: "bg-indigo-500" },
+  Goods: { icon: Book, color: "bg-blue-600" },
+  Works: { icon: Book, color: "bg-sky-500" },
+  Services: { icon: Book, color: "bg-indigo-500" },
 };
 
 function AddQuestionPage({
@@ -473,7 +471,7 @@ function Home() {
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {tree.map(([subj, secs]) => {
                     const total = Array.from(secs.values()).reduce((a, b) => a + b, 0);
-                    const meta = SUBJECT_META[subj] ?? { icon: Package, color: "bg-primary" };
+                    const meta = SUBJECT_META[subj] ?? { icon: Book, color: "bg-primary" };
                     const Icon = meta.icon;
                     return (
                       <button
